@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -46,19 +45,16 @@ const TeacherDashboard = () => {
 
   const students = getStudentsByRole();
 
-  // Initialize test completions and feedback when student changes
   useEffect(() => {
     if (selectedStudentId) {
       const studentId = parseInt(selectedStudentId);
       
-      // Initialize tests as not selected for this session
       const initialTestState: Record<number, boolean> = {};
       tests.forEach(test => {
         initialTestState[test.id] = false;
       });
       setSelectedTests(initialTestState);
       
-      // Get category feedback
       const verrichtingenFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.VERRICHTINGEN);
       const roeitechniekFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.ROEITECHNIEK);
       const stuurkunstFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.STUURKUNST);
@@ -107,22 +103,18 @@ const TeacherDashboard = () => {
     setLoading(true);
     
     try {
-      // Save grades
       Object.entries(selectedGrades).forEach(([subjectId, grade]) => {
         addGrade(studentId, parseInt(subjectId), grade, user?.id || 0, '');
       });
       
-      // Save category feedback
       Object.entries(categoryFeedback).forEach(([category, feedback]) => {
         if (feedback.trim()) {
           addCategoryFeedback(studentId, category, feedback, user?.id || 0);
         }
       });
       
-      // Save test completions for selected tests
       Object.entries(selectedTests).forEach(([testId, isCompleted]) => {
         if (isCompleted) {
-          // Only add completion for checked tests
           addTestCompletion(studentId, parseInt(testId), true);
         }
       });
@@ -131,10 +123,8 @@ const TeacherDashboard = () => {
         description: 'Student grades, feedback, and test completions have been updated.',
       });
       
-      // Reset form
       setSelectedGrades({});
       
-      // Reset test selections
       const resetTests: Record<number, boolean> = {};
       tests.forEach(test => {
         resetTests[test.id] = false;
@@ -150,9 +140,9 @@ const TeacherDashboard = () => {
     }
   };
 
-  const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
-  const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
-  const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST);
+  const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN).filter(subject => subject.active);
+  const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK).filter(subject => subject.active);
+  const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST).filter(subject => subject.active);
 
   return (
     <DashboardLayout allowedRoles={['teacher', 'admin']}>
@@ -218,12 +208,6 @@ const TeacherDashboard = () => {
                                       <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
                                         {subject.category}
                                       </Badge>
-                                      
-                                      {!subject.active && (
-                                        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-                                          Inactive
-                                        </Badge>
-                                      )}
                                     </div>
                                   </div>
                                   
@@ -232,7 +216,6 @@ const TeacherDashboard = () => {
                                       value={selectedGrades[subject.id]?.toString() || ""}
                                       onValueChange={(value) => handleGradeChange(subject.id, parseInt(value))}
                                       className="flex items-center space-x-2"
-                                      disabled={!subject.active}
                                     >
                                       <div className="flex items-center space-x-1">
                                         <RadioGroupItem value="1" id={`grade-1-${subject.id}`} className="text-red-500" />
@@ -249,12 +232,6 @@ const TeacherDashboard = () => {
                                     </RadioGroup>
                                   </div>
                                 </div>
-                                
-                                {!subject.active && (
-                                  <p className="text-sm text-muted-foreground mt-2 italic">
-                                    This subject is currently disabled by an administrator
-                                  </p>
-                                )}
                               </div>
                             ))}
                             
@@ -290,12 +267,6 @@ const TeacherDashboard = () => {
                                       <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
                                         {subject.category}
                                       </Badge>
-                                      
-                                      {!subject.active && (
-                                        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-                                          Inactive
-                                        </Badge>
-                                      )}
                                     </div>
                                   </div>
                                   
@@ -304,7 +275,6 @@ const TeacherDashboard = () => {
                                       value={selectedGrades[subject.id]?.toString() || ""}
                                       onValueChange={(value) => handleGradeChange(subject.id, parseInt(value))}
                                       className="flex items-center space-x-2"
-                                      disabled={!subject.active}
                                     >
                                       <div className="flex items-center space-x-1">
                                         <RadioGroupItem value="1" id={`grade-1-${subject.id}`} className="text-red-500" />
@@ -321,12 +291,6 @@ const TeacherDashboard = () => {
                                     </RadioGroup>
                                   </div>
                                 </div>
-                                
-                                {!subject.active && (
-                                  <p className="text-sm text-muted-foreground mt-2 italic">
-                                    This subject is currently disabled by an administrator
-                                  </p>
-                                )}
                               </div>
                             ))}
                             
@@ -362,12 +326,6 @@ const TeacherDashboard = () => {
                                       <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
                                         {subject.category}
                                       </Badge>
-                                      
-                                      {!subject.active && (
-                                        <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-                                          Inactive
-                                        </Badge>
-                                      )}
                                     </div>
                                   </div>
                                   
@@ -376,7 +334,6 @@ const TeacherDashboard = () => {
                                       value={selectedGrades[subject.id]?.toString() || ""}
                                       onValueChange={(value) => handleGradeChange(subject.id, parseInt(value))}
                                       className="flex items-center space-x-2"
-                                      disabled={!subject.active}
                                     >
                                       <div className="flex items-center space-x-1">
                                         <RadioGroupItem value="1" id={`grade-1-${subject.id}`} className="text-red-500" />
@@ -393,12 +350,6 @@ const TeacherDashboard = () => {
                                     </RadioGroup>
                                   </div>
                                 </div>
-                                
-                                {!subject.active && (
-                                  <p className="text-sm text-muted-foreground mt-2 italic">
-                                    This subject is currently disabled by an administrator
-                                  </p>
-                                )}
                               </div>
                             ))}
                             

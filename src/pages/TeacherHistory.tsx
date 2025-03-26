@@ -47,9 +47,9 @@ const TeacherHistory = () => {
     ? getStudentTests(parseInt(selectedStudentId))
     : [];
   
-  const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
-  const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
-  const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST);
+  const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN).filter(subject => subject.active);
+  const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK).filter(subject => subject.active);
+  const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST).filter(subject => subject.active);
   
   // Get category feedback
   const verrichtingenFeedback = selectedStudentId 
@@ -131,6 +131,7 @@ const TeacherHistory = () => {
                           value={CATEGORIES.VERRICHTINGEN} 
                           className="space-y-6"
                           asChild
+                          key="verrichtingen"
                         >
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -207,6 +208,7 @@ const TeacherHistory = () => {
                           value={CATEGORIES.ROEITECHNIEK} 
                           className="space-y-6"
                           asChild
+                          key="roeitechniek"
                         >
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -283,6 +285,7 @@ const TeacherHistory = () => {
                           value={CATEGORIES.STUURKUNST} 
                           className="space-y-6"
                           asChild
+                          key="stuurkunst"
                         >
                           <motion.div
                             initial={{ opacity: 0 }}

@@ -232,9 +232,10 @@ export const getStudentLatestGrades = (studentId: number, subjectId: number, lim
 };
 
 export const getStudentAverageGrade = (studentId: number, subjectId: number) => {
-  const studentSubjectGrades = grades.filter(
-    grade => grade.studentId === studentId && grade.subjectId === subjectId
-  );
+  const studentSubjectGrades = grades
+    .filter(grade => grade.studentId === studentId && grade.subjectId === subjectId)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3); // Only use the last 3 grades for average
   
   if (studentSubjectGrades.length === 0) return 0;
   
