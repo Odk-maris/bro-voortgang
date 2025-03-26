@@ -17,7 +17,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -43,7 +42,7 @@ const TeacherDashboard = () => {
   const [selectedGrades, setSelectedGrades] = useState<Record<number, number>>({});
   const [categoryFeedback, setCategoryFeedback] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [testCompletions, setTestCompletions] = useState<Record<number, number>>({});
+  const [selectedTests, setSelectedTests] = useState<Record<number, boolean>>({});
 
   const students = getStudentsByRole();
 
@@ -51,15 +50,13 @@ const TeacherDashboard = () => {
   useEffect(() => {
     if (selectedStudentId) {
       const studentId = parseInt(selectedStudentId);
-      const studentTests = getStudentTests(studentId);
       
-      // Count completed tests
-      const testCounts: Record<number, number> = {};
+      // Initialize tests as not selected for this session
+      const initialTestState: Record<number, boolean> = {};
       tests.forEach(test => {
-        testCounts[test.id] = getStudentTestCompletionCount(studentId, test.id);
+        initialTestState[test.id] = false;
       });
-      
-      setTestCompletions(testCounts);
+      setSelectedTests(initialTestState);
       
       // Get category feedback
       const verrichtingenFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.VERRICHTINGEN);
@@ -93,17 +90,10 @@ const TeacherDashboard = () => {
     }));
   };
 
-  const handleTestIncrement = (testId: number) => {
-    setTestCompletions(prev => ({
+  const handleTestChange = (testId: number, checked: boolean) => {
+    setSelectedTests(prev => ({
       ...prev,
-      [testId]: (prev[testId] || 0) + 1
-    }));
-  };
-
-  const handleTestDecrement = (testId: number) => {
-    setTestCompletions(prev => ({
-      ...prev,
-      [testId]: Math.max(0, (prev[testId] || 0) - 1)
+      [testId]: checked
     }));
   };
 
@@ -129,21 +119,11 @@ const TeacherDashboard = () => {
         }
       });
       
-      // Save test completions
-      Object.entries(testCompletions).forEach(([testId, count]) => {
-        const currentCount = getStudentTestCompletionCount(studentId, parseInt(testId));
-        const difference = count - currentCount;
-        
-        if (difference > 0) {
-          // Add new completions
-          for (let i = 0; i < difference; i++) {
-            addTestCompletion(studentId, parseInt(testId), true);
-          }
-        } else if (difference < 0) {
-          // Remove completions
-          for (let i = 0; i < Math.abs(difference); i++) {
-            addTestCompletion(studentId, parseInt(testId), false);
-          }
+      // Save test completions for selected tests
+      Object.entries(selectedTests).forEach(([testId, isCompleted]) => {
+        if (isCompleted) {
+          // Only add completion for checked tests
+          addTestCompletion(studentId, parseInt(testId), true);
         }
       });
 
@@ -153,6 +133,14 @@ const TeacherDashboard = () => {
       
       // Reset form
       setSelectedGrades({});
+      
+      // Reset test selections
+      const resetTests: Record<number, boolean> = {};
+      tests.forEach(test => {
+        resetTests[test.id] = false;
+      });
+      setSelectedTests(resetTests);
+      
     } catch (error) {
       toast.error('Failed to save', {
         description: 'There was an error saving the data. Please try again.',
@@ -273,7 +261,7 @@ const TeacherDashboard = () => {
                             <div className="border rounded-lg p-4 mt-6">
                               <h3 className="font-medium mb-2">Feedback for Verrichtingen</h3>
                               <Textarea
-                                placeholder="Add feedback for this category..."
+                                placeholder="Vul hier je feedback in als je iets wilt delen"
                                 value={categoryFeedback[CATEGORIES.VERRICHTINGEN] || ''}
                                 onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.VERRICHTINGEN, e.target.value)}
                                 className="resize-none h-32"
@@ -345,7 +333,7 @@ const TeacherDashboard = () => {
                             <div className="border rounded-lg p-4 mt-6">
                               <h3 className="font-medium mb-2">Feedback for Roeitechniek</h3>
                               <Textarea
-                                placeholder="Add feedback for this category..."
+                                placeholder="Vul hier je feedback in als je iets wilt delen"
                                 value={categoryFeedback[CATEGORIES.ROEITECHNIEK] || ''}
                                 onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.ROEITECHNIEK, e.target.value)}
                                 className="resize-none h-32"
@@ -417,7 +405,7 @@ const TeacherDashboard = () => {
                             <div className="border rounded-lg p-4 mt-6">
                               <h3 className="font-medium mb-2">Feedback for Stuurkunst</h3>
                               <Textarea
-                                placeholder="Add feedback for this category..."
+                                placeholder="Vul hier je feedback in als je iets wilt delen"
                                 value={categoryFeedback[CATEGORIES.STUURKUNST] || ''}
                                 onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.STUURKUNST, e.target.value)}
                                 className="resize-none h-32"
@@ -439,39 +427,29 @@ const TeacherDashboard = () => {
                   <CardContent>
                     <div className="space-y-4">
                       {tests.map((test) => (
-                        <div key={test.id} className="flex items-start justify-between">
+                        <div key={test.id} className="flex items-start space-x-3">
+                          <div className="flex items-center space-x-2 pt-1">
+                            <Checkbox 
+                              id={`test-${test.id}`} 
+                              checked={selectedTests[test.id] || false}
+                              onCheckedChange={(checked) => handleTestChange(test.id, checked === true)}
+                            />
+                          </div>
                           <div className="grid gap-1.5 leading-none">
                             <Label
-                              className="text-sm font-medium leading-none"
+                              htmlFor={`test-${test.id}`}
+                              className="text-sm font-medium leading-none cursor-pointer"
                             >
                               {test.name}
                             </Label>
                             <p className="text-sm text-muted-foreground">
                               {test.description}
                             </p>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => handleTestDecrement(test.id)}
-                              disabled={!testCompletions[test.id]}
-                              className="h-8 w-8"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="w-8 text-center font-medium">
-                              {testCompletions[test.id] || 0}
-                            </span>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              onClick={() => handleTestIncrement(test.id)}
-                              className="h-8 w-8"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
+                            {getStudentTestCompletionCount(parseInt(selectedStudentId), test.id) > 0 && (
+                              <Badge variant="outline" className="mt-1 text-xs bg-green-100 text-green-800 border-green-200 w-fit">
+                                Completed {getStudentTestCompletionCount(parseInt(selectedStudentId), test.id)} times previously
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       ))}
