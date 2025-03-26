@@ -1,4 +1,3 @@
-
 // Mock data for the application
 // In a real app, this would be fetched from a database
 
@@ -104,6 +103,61 @@ export const users = [
   },
 ];
 
+// Category feedback
+export const categoryFeedback = [
+  // Student 1 category feedback
+  { 
+    id: 1, 
+    studentId: 1, 
+    category: CATEGORIES.VERRICHTINGEN, 
+    feedback: 'Good progress in handling equipment. Work on consistent technique.', 
+    date: '2023-06-20', 
+    teacherId: 3 
+  },
+  { 
+    id: 2, 
+    studentId: 1, 
+    category: CATEGORIES.ROEITECHNIEK, 
+    feedback: 'Excellent rowing technique. Continue practicing recovery timing.', 
+    date: '2023-05-22', 
+    teacherId: 3 
+  },
+  { 
+    id: 3, 
+    studentId: 1, 
+    category: CATEGORIES.STUURKUNST, 
+    feedback: 'Very good steering skills. Work on commands during bridge passing.', 
+    date: '2023-06-05', 
+    teacherId: 4 
+  },
+  
+  // Student 2 category feedback
+  { 
+    id: 4, 
+    studentId: 2, 
+    category: CATEGORIES.VERRICHTINGEN, 
+    feedback: 'Handling is improving. Keep working on consistent approach.', 
+    date: '2023-05-15', 
+    teacherId: 3 
+  },
+  { 
+    id: 5, 
+    studentId: 2, 
+    category: CATEGORIES.ROEITECHNIEK, 
+    feedback: 'Good improvement on technique. Focus on synchronization.', 
+    date: '2023-06-10', 
+    teacherId: 3 
+  },
+  { 
+    id: 6, 
+    studentId: 2, 
+    category: CATEGORIES.STUURKUNST, 
+    feedback: 'Steering skills are acceptable. Work on emergency procedures.', 
+    date: '2023-06-05', 
+    teacherId: 4 
+  },
+];
+
 // Student grades
 export const grades = [
   // Student 1 grades
@@ -126,15 +180,17 @@ export const grades = [
   { id: 15, studentId: 2, subjectId: 26, grade: 2, date: '2023-06-05', teacherId: 4, feedback: 'Goede stuurvaardigheden.' },
 ];
 
-// Student test completions
+// Student test completions (modified to track multiple completions)
 export const testCompletions = [
   { id: 1, studentId: 1, testId: 1, completed: true, date: '2023-04-10' },
-  { id: 2, studentId: 1, testId: 2, completed: true, date: '2023-04-15' },
-  { id: 3, studentId: 1, testId: 3, completed: true, date: '2023-05-10' },
-  { id: 4, studentId: 1, testId: 4, completed: false, date: null },
-  { id: 5, studentId: 2, testId: 1, completed: true, date: '2023-04-12' },
-  { id: 6, studentId: 2, testId: 2, completed: true, date: '2023-04-18' },
-  { id: 7, studentId: 2, testId: 3, completed: false, date: null },
+  { id: 2, studentId: 1, testId: 1, completed: true, date: '2023-05-15' }, // Second completion of test 1
+  { id: 3, studentId: 1, testId: 2, completed: true, date: '2023-04-15' },
+  { id: 4, studentId: 1, testId: 3, completed: true, date: '2023-05-10' },
+  { id: 5, studentId: 1, testId: 4, completed: false, date: null },
+  { id: 6, studentId: 2, testId: 1, completed: true, date: '2023-04-12' },
+  { id: 7, studentId: 2, testId: 2, completed: true, date: '2023-04-18' },
+  { id: 8, studentId: 2, testId: 2, completed: true, date: '2023-05-20' }, // Second completion of test 2
+  { id: 9, studentId: 2, testId: 3, completed: false, date: null },
 ];
 
 // Helper functions to work with the mock data
@@ -144,6 +200,12 @@ export const getStudentGrades = (studentId: number) => {
 
 export const getStudentTests = (studentId: number) => {
   return testCompletions.filter(test => test.studentId === studentId);
+};
+
+export const getStudentTestCompletionCount = (studentId: number, testId: number) => {
+  return testCompletions.filter(
+    test => test.studentId === studentId && test.testId === testId && test.completed
+  ).length;
 };
 
 export const getSubjectById = (subjectId: number) => {
@@ -203,7 +265,7 @@ export const updateSubjectActiveStatus = (subjectId: number, active: boolean) =>
 export const addGrade = (
   studentId: number, 
   subjectId: number, 
-  grade: number, 
+  grade: number,
   teacherId: number, 
   feedback: string
 ) => {
@@ -221,21 +283,41 @@ export const addGrade = (
   return newGrade;
 };
 
-export const updateTestCompletion = (
+export const getStudentCategoryFeedback = (studentId: number, category: string) => {
+  return categoryFeedback
+    .filter(feedback => feedback.studentId === studentId && feedback.category === category)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+export const getStudentLatestCategoryFeedback = (studentId: number, category: string) => {
+  const feedback = getStudentCategoryFeedback(studentId, category);
+  return feedback.length > 0 ? feedback[0] : null;
+};
+
+export const addCategoryFeedback = (
+  studentId: number,
+  category: string,
+  feedback: string,
+  teacherId: number
+) => {
+  const newFeedback = {
+    id: categoryFeedback.length + 1,
+    studentId,
+    category,
+    feedback,
+    date: new Date().toISOString().split('T')[0],
+    teacherId
+  };
+  
+  categoryFeedback.push(newFeedback);
+  return newFeedback;
+};
+
+export const addTestCompletion = (
   studentId: number,
   testId: number,
   completed: boolean
 ) => {
-  const testCompletionIndex = testCompletions.findIndex(
-    test => test.studentId === studentId && test.testId === testId
-  );
-  
-  if (testCompletionIndex !== -1) {
-    testCompletions[testCompletionIndex].completed = completed;
-    testCompletions[testCompletionIndex].date = completed ? new Date().toISOString().split('T')[0] : null;
-    return testCompletions[testCompletionIndex];
-  }
-  
   const newTestCompletion = {
     id: testCompletions.length + 1,
     studentId,
@@ -246,4 +328,30 @@ export const updateTestCompletion = (
   
   testCompletions.push(newTestCompletion);
   return newTestCompletion;
+};
+
+export const updateTestCompletion = (
+  studentId: number,
+  testId: number,
+  completed: boolean
+) => {
+  if (completed) {
+    return addTestCompletion(studentId, testId, completed);
+  } else {
+    const testCompletionsForStudent = testCompletions
+      .filter(test => test.studentId === studentId && test.testId === testId && test.completed)
+      .sort((a, b) => {
+        if (!a.date || !b.date) return 0;
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+    
+    if (testCompletionsForStudent.length > 0) {
+      const index = testCompletions.findIndex(test => test.id === testCompletionsForStudent[0].id);
+      if (index !== -1) {
+        testCompletions.splice(index, 1);
+      }
+    }
+    
+    return null;
+  }
 };

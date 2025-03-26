@@ -20,7 +20,10 @@ import {
   getStudentTests,
   getSubjectsByCategory,
   getUserById,
+  getStudentCategoryFeedback,
+  getStudentTestCompletionCount,
   CATEGORIES,
+  tests,
 } from '@/utils/mockData';
 import FeedbackItem from '@/components/FeedbackItem';
 
@@ -35,7 +38,7 @@ const TeacherHistory = () => {
     setSelectedStudentId(value);
   };
 
-  // Get student grades and tests if a student is selected
+  // Get student grades, tests, and feedback if a student is selected
   const studentGrades = selectedStudentId
     ? getStudentGrades(parseInt(selectedStudentId))
     : [];
@@ -48,6 +51,19 @@ const TeacherHistory = () => {
   const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
   const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST);
   
+  // Get category feedback
+  const verrichtingenFeedback = selectedStudentId 
+    ? getStudentCategoryFeedback(parseInt(selectedStudentId), CATEGORIES.VERRICHTINGEN)
+    : [];
+  
+  const roeitechniekFeedback = selectedStudentId 
+    ? getStudentCategoryFeedback(parseInt(selectedStudentId), CATEGORIES.ROEITECHNIEK)
+    : [];
+  
+  const stuurkunstFeedback = selectedStudentId 
+    ? getStudentCategoryFeedback(parseInt(selectedStudentId), CATEGORIES.STUURKUNST)
+    : [];
+  
   // Function to get grades for a subject
   const getSubjectGrades = (subjectId: number) => {
     return studentGrades
@@ -59,6 +75,12 @@ const TeacherHistory = () => {
   const getTeacherName = (teacherId: number) => {
     const teacher = getUserById(teacherId);
     return teacher ? teacher.name : 'Unknown Teacher';
+  };
+
+  // Count test completions
+  const getTestCompletionCount = (testId: number) => {
+    if (!selectedStudentId) return 0;
+    return getStudentTestCompletionCount(parseInt(selectedStudentId), testId);
   };
 
   return (
@@ -94,7 +116,7 @@ const TeacherHistory = () => {
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Grade History</CardTitle>
+                    <CardTitle>Grade & Feedback History</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -116,6 +138,25 @@ const TeacherHistory = () => {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
                           >
+                            {/* Category Feedback Section */}
+                            {verrichtingenFeedback.length > 0 && (
+                              <div className="border rounded-lg p-4 mb-6">
+                                <h3 className="font-medium mb-3">Category Feedback</h3>
+                                <div className="space-y-4">
+                                  {verrichtingenFeedback.map((feedback) => (
+                                    <div key={feedback.id} className="border-t pt-3">
+                                      <FeedbackItem 
+                                        feedback={feedback.feedback} 
+                                        date={feedback.date} 
+                                        teacherName={getTeacherName(feedback.teacherId)} 
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          
+                            {/* Subjects Section */}
                             {verrichtingenSubjects.map((subject) => {
                               const subjectGrades = getSubjectGrades(subject.id);
                               if (subjectGrades.length === 0) return null;
@@ -153,12 +194,6 @@ const TeacherHistory = () => {
                                             </span>
                                           </div>
                                         </div>
-                                        
-                                        <FeedbackItem 
-                                          feedback={grade.feedback} 
-                                          date={grade.date} 
-                                          teacherName={getTeacherName(grade.teacherId)} 
-                                        />
                                       </div>
                                     ))}
                                   </div>
@@ -179,6 +214,25 @@ const TeacherHistory = () => {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
                           >
+                            {/* Category Feedback Section */}
+                            {roeitechniekFeedback.length > 0 && (
+                              <div className="border rounded-lg p-4 mb-6">
+                                <h3 className="font-medium mb-3">Category Feedback</h3>
+                                <div className="space-y-4">
+                                  {roeitechniekFeedback.map((feedback) => (
+                                    <div key={feedback.id} className="border-t pt-3">
+                                      <FeedbackItem 
+                                        feedback={feedback.feedback} 
+                                        date={feedback.date} 
+                                        teacherName={getTeacherName(feedback.teacherId)} 
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          
+                            {/* Subjects Section */}
                             {roeitechniekSubjects.map((subject) => {
                               const subjectGrades = getSubjectGrades(subject.id);
                               if (subjectGrades.length === 0) return null;
@@ -216,12 +270,6 @@ const TeacherHistory = () => {
                                             </span>
                                           </div>
                                         </div>
-                                        
-                                        <FeedbackItem 
-                                          feedback={grade.feedback} 
-                                          date={grade.date} 
-                                          teacherName={getTeacherName(grade.teacherId)} 
-                                        />
                                       </div>
                                     ))}
                                   </div>
@@ -242,6 +290,25 @@ const TeacherHistory = () => {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
                           >
+                            {/* Category Feedback Section */}
+                            {stuurkunstFeedback.length > 0 && (
+                              <div className="border rounded-lg p-4 mb-6">
+                                <h3 className="font-medium mb-3">Category Feedback</h3>
+                                <div className="space-y-4">
+                                  {stuurkunstFeedback.map((feedback) => (
+                                    <div key={feedback.id} className="border-t pt-3">
+                                      <FeedbackItem 
+                                        feedback={feedback.feedback} 
+                                        date={feedback.date} 
+                                        teacherName={getTeacherName(feedback.teacherId)} 
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          
+                            {/* Subjects Section */}
                             {stuurkunstSubjects.map((subject) => {
                               const subjectGrades = getSubjectGrades(subject.id);
                               if (subjectGrades.length === 0) return null;
@@ -279,12 +346,6 @@ const TeacherHistory = () => {
                                             </span>
                                           </div>
                                         </div>
-                                        
-                                        <FeedbackItem 
-                                          feedback={grade.feedback} 
-                                          date={grade.date} 
-                                          teacherName={getTeacherName(grade.teacherId)} 
-                                        />
                                       </div>
                                     ))}
                                   </div>
@@ -302,29 +363,34 @@ const TeacherHistory = () => {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Test Progress</CardTitle>
+                    <CardTitle>Test Completions</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {studentTests.map((test) => (
-                        <div key={test.id} className="flex items-center justify-between border rounded-lg p-3">
-                          <div>
-                            <p className="font-medium">Test {test.testId}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {test.completed ? `Completed on ${new Date(test.date || '').toLocaleDateString()}` : 'Not completed'}
-                            </p>
+                      {tests.map((test) => {
+                        const completionCount = getTestCompletionCount(test.id);
+                        return (
+                          <div key={test.id} className="flex items-center justify-between border rounded-lg p-3">
+                            <div>
+                              <p className="font-medium">{test.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {completionCount > 0 
+                                  ? `Completed ${completionCount} time${completionCount !== 1 ? 's' : ''}` 
+                                  : 'Not completed'}
+                              </p>
+                            </div>
+                            
+                            <Badge
+                              variant="outline"
+                              className={`
+                                ${completionCount > 0 ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}
+                              `}
+                            >
+                              {completionCount > 0 ? `${completionCount} ${completionCount === 1 ? 'time' : 'times'}` : 'Pending'}
+                            </Badge>
                           </div>
-                          
-                          <Badge
-                            variant="outline"
-                            className={`
-                              ${test.completed ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}
-                            `}
-                          >
-                            {test.completed ? 'Completed' : 'Pending'}
-                          </Badge>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>

@@ -8,12 +8,16 @@ import {
   getSubjectsByCategory, 
   getStudentGrades, 
   getStudentTests,
+  getStudentTestCompletionCount,
+  getStudentLatestCategoryFeedback,
   CATEGORIES,
+  tests,
 } from '@/utils/mockData';
 import SubjectCard from '@/components/SubjectCard';
 import GradeChart from '@/components/GradeChart';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2 } from 'lucide-react';
+import FeedbackItem from '@/components/FeedbackItem';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -29,6 +33,11 @@ const StudentDashboard = () => {
   const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
   const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST);
   
+  // Get latest category feedback
+  const verrichtingenFeedback = getStudentLatestCategoryFeedback(studentId, CATEGORIES.VERRICHTINGEN);
+  const roeitechniekFeedback = getStudentLatestCategoryFeedback(studentId, CATEGORIES.ROEITECHNIEK);
+  const stuurkunstFeedback = getStudentLatestCategoryFeedback(studentId, CATEGORIES.STUURKUNST);
+  
   // Calculate grade distribution for charts
   const countGradesByValue = (grades: typeof studentGrades) => {
     const counts = { 1: 0, 2: 0, 3: 0 };
@@ -41,7 +50,12 @@ const StudentDashboard = () => {
   };
 
   const gradeDistribution = countGradesByValue(studentGrades);
-  const completedTests = studentTests.filter(test => test.completed).length;
+  const totalTestCompletions = studentTests.filter(test => test.completed).length;
+  
+  // Count test completions
+  const getTestCount = (testId: number) => {
+    return getStudentTestCompletionCount(studentId, testId);
+  };
   
   return (
     <DashboardLayout allowedRoles={['student']}>
@@ -63,14 +77,14 @@ const StudentDashboard = () => {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Completed Tests</CardTitle>
+              <CardTitle className="text-base font-medium">Test Completions</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="text-3xl font-semibold mb-1">
-                {completedTests} <span className="text-sm text-muted-foreground font-normal">of 10</span>
+                {totalTestCompletions}
               </div>
               <p className="text-sm text-muted-foreground">
-                Required tests completed
+                Total tests completed
               </p>
             </CardContent>
           </Card>
@@ -89,6 +103,21 @@ const StudentDashboard = () => {
           </TabsList>
           
           <TabsContent value={CATEGORIES.VERRICHTINGEN} className="space-y-4">
+            {verrichtingenFeedback && (
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-base">Feedback - Verrichtingen</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FeedbackItem 
+                    feedback={verrichtingenFeedback.feedback} 
+                    date={verrichtingenFeedback.date} 
+                    teacherName={verrichtingenFeedback.teacherId ? getUserById(verrichtingenFeedback.teacherId)?.name || 'Teacher' : 'Teacher'} 
+                  />
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="grid gap-4">
               {verrichtingenSubjects.map(subject => (
                 <SubjectCard 
@@ -101,6 +130,21 @@ const StudentDashboard = () => {
           </TabsContent>
           
           <TabsContent value={CATEGORIES.ROEITECHNIEK} className="space-y-4">
+            {roeitechniekFeedback && (
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-base">Feedback - Roeitechniek</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FeedbackItem 
+                    feedback={roeitechniekFeedback.feedback} 
+                    date={roeitechniekFeedback.date} 
+                    teacherName={roeitechniekFeedback.teacherId ? getUserById(roeitechniekFeedback.teacherId)?.name || 'Teacher' : 'Teacher'} 
+                  />
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="grid gap-4">
               {roeitechniekSubjects.map(subject => (
                 <SubjectCard 
@@ -113,6 +157,21 @@ const StudentDashboard = () => {
           </TabsContent>
           
           <TabsContent value={CATEGORIES.STUURKUNST} className="space-y-4">
+            {stuurkunstFeedback && (
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-base">Feedback - Stuurkunst</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FeedbackItem 
+                    feedback={stuurkunstFeedback.feedback} 
+                    date={stuurkunstFeedback.date} 
+                    teacherName={stuurkunstFeedback.teacherId ? getUserById(stuurkunstFeedback.teacherId)?.name || 'Teacher' : 'Teacher'} 
+                  />
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="grid gap-4">
               {stuurkunstSubjects.map(subject => (
                 <SubjectCard 
@@ -126,33 +185,33 @@ const StudentDashboard = () => {
         </Tabs>
         
         <div className="mt-6">
-          <h2 className="text-lg font-medium mb-4">Completed Tests</h2>
+          <h2 className="text-lg font-medium mb-4">Test Completions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {studentTests.map((test) => {
-              const testInfo = test.testId;
+            {tests.map((test) => {
+              const completionCount = getTestCount(test.id);
               return (
-                <Card key={test.id} className={`transition-colors ${test.completed ? 'border-green-100 bg-green-50/50' : ''}`}>
+                <Card key={test.id} className={`transition-colors ${completionCount > 0 ? 'border-green-100 bg-green-50/50' : ''}`}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      {test.completed ? (
+                      {completionCount > 0 ? (
                         <CheckCircle2 className="h-5 w-5 text-green-500" />
                       ) : (
                         <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
                       )}
                       <div>
-                        <p className="font-medium">Test {test.testId}</p>
+                        <p className="font-medium">{test.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {test.completed ? (
-                            <span>Completed on {new Date(test.date || '').toLocaleDateString()}</span>
+                          {completionCount > 0 ? (
+                            <span>Completed {completionCount} time{completionCount !== 1 ? 's' : ''}</span>
                           ) : (
                             <span>Not yet completed</span>
                           )}
                         </p>
                       </div>
                     </div>
-                    {test.completed && (
+                    {completionCount > 0 && (
                       <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                        Completed
+                        {completionCount} {completionCount === 1 ? 'time' : 'times'}
                       </Badge>
                     )}
                   </CardContent>

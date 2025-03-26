@@ -17,6 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -26,10 +27,13 @@ import {
   getStudentGrades,
   getStudentLatestGrades,
   addGrade,
-  updateTestCompletion,
+  addTestCompletion,
   getStudentTests,
+  getStudentTestCompletionCount,
   tests,
   CATEGORIES,
+  getStudentCategoryFeedback,
+  addCategoryFeedback,
 } from '@/utils/mockData';
 
 const TeacherDashboard = () => {
@@ -37,31 +41,42 @@ const TeacherDashboard = () => {
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [activeTab, setActiveTab] = useState(CATEGORIES.VERRICHTINGEN);
   const [selectedGrades, setSelectedGrades] = useState<Record<number, number>>({});
-  const [feedback, setFeedback] = useState<Record<number, string>>({});
+  const [categoryFeedback, setCategoryFeedback] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [completedTests, setCompletedTests] = useState<Record<number, boolean>>({});
+  const [testCompletions, setTestCompletions] = useState<Record<number, number>>({});
 
   const students = getStudentsByRole();
 
-  // Initialize completed tests when student changes
+  // Initialize test completions and feedback when student changes
   useEffect(() => {
     if (selectedStudentId) {
       const studentId = parseInt(selectedStudentId);
       const studentTests = getStudentTests(studentId);
       
-      const testStatus: Record<number, boolean> = {};
-      studentTests.forEach(test => {
-        testStatus[test.testId] = test.completed;
+      // Count completed tests
+      const testCounts: Record<number, number> = {};
+      tests.forEach(test => {
+        testCounts[test.id] = getStudentTestCompletionCount(studentId, test.id);
       });
       
-      setCompletedTests(testStatus);
+      setTestCompletions(testCounts);
+      
+      // Get category feedback
+      const verrichtingenFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.VERRICHTINGEN);
+      const roeitechniekFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.ROEITECHNIEK);
+      const stuurkunstFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.STUURKUNST);
+      
+      setCategoryFeedback({
+        [CATEGORIES.VERRICHTINGEN]: verrichtingenFeedback.length > 0 ? verrichtingenFeedback[0].feedback : '',
+        [CATEGORIES.ROEITECHNIEK]: roeitechniekFeedback.length > 0 ? roeitechniekFeedback[0].feedback : '',
+        [CATEGORIES.STUURKUNST]: stuurkunstFeedback.length > 0 ? stuurkunstFeedback[0].feedback : ''
+      });
     }
   }, [selectedStudentId]);
 
   const handleStudentChange = (value: string) => {
     setSelectedStudentId(value);
     setSelectedGrades({});
-    setFeedback({});
   };
 
   const handleGradeChange = (subjectId: number, grade: number) => {
@@ -71,17 +86,24 @@ const TeacherDashboard = () => {
     }));
   };
 
-  const handleFeedbackChange = (subjectId: number, value: string) => {
-    setFeedback(prev => ({
+  const handleCategoryFeedbackChange = (category: string, value: string) => {
+    setCategoryFeedback(prev => ({
       ...prev,
-      [subjectId]: value
+      [category]: value
     }));
   };
 
-  const handleTestChange = (testId: number, checked: boolean) => {
-    setCompletedTests(prev => ({
+  const handleTestIncrement = (testId: number) => {
+    setTestCompletions(prev => ({
       ...prev,
-      [testId]: checked
+      [testId]: (prev[testId] || 0) + 1
+    }));
+  };
+
+  const handleTestDecrement = (testId: number) => {
+    setTestCompletions(prev => ({
+      ...prev,
+      [testId]: Math.max(0, (prev[testId] || 0) - 1)
     }));
   };
 
@@ -95,24 +117,42 @@ const TeacherDashboard = () => {
     setLoading(true);
     
     try {
-      // Save grades and feedback
+      // Save grades
       Object.entries(selectedGrades).forEach(([subjectId, grade]) => {
-        const subjectFeedback = feedback[parseInt(subjectId)] || '';
-        addGrade(studentId, parseInt(subjectId), grade, user?.id || 0, subjectFeedback);
+        addGrade(studentId, parseInt(subjectId), grade, user?.id || 0, '');
+      });
+      
+      // Save category feedback
+      Object.entries(categoryFeedback).forEach(([category, feedback]) => {
+        if (feedback.trim()) {
+          addCategoryFeedback(studentId, category, feedback, user?.id || 0);
+        }
       });
       
       // Save test completions
-      Object.entries(completedTests).forEach(([testId, completed]) => {
-        updateTestCompletion(studentId, parseInt(testId), completed);
+      Object.entries(testCompletions).forEach(([testId, count]) => {
+        const currentCount = getStudentTestCompletionCount(studentId, parseInt(testId));
+        const difference = count - currentCount;
+        
+        if (difference > 0) {
+          // Add new completions
+          for (let i = 0; i < difference; i++) {
+            addTestCompletion(studentId, parseInt(testId), true);
+          }
+        } else if (difference < 0) {
+          // Remove completions
+          for (let i = 0; i < Math.abs(difference); i++) {
+            addTestCompletion(studentId, parseInt(testId), false);
+          }
+        }
       });
 
       toast.success('Saved successfully', {
-        description: 'Student grades and test completions have been updated.',
+        description: 'Student grades, feedback, and test completions have been updated.',
       });
       
       // Reset form
       setSelectedGrades({});
-      setFeedback({});
     } catch (error) {
       toast.error('Failed to save', {
         description: 'There was an error saving the data. Please try again.',
@@ -222,14 +262,6 @@ const TeacherDashboard = () => {
                                   </div>
                                 </div>
                                 
-                                <Textarea
-                                  placeholder="Add feedback for the student..."
-                                  value={feedback[subject.id] || ''}
-                                  onChange={(e) => handleFeedbackChange(subject.id, e.target.value)}
-                                  disabled={!subject.active}
-                                  className="resize-none h-20"
-                                />
-                                
                                 {!subject.active && (
                                   <p className="text-sm text-muted-foreground mt-2 italic">
                                     This subject is currently disabled by an administrator
@@ -237,6 +269,16 @@ const TeacherDashboard = () => {
                                 )}
                               </div>
                             ))}
+                            
+                            <div className="border rounded-lg p-4 mt-6">
+                              <h3 className="font-medium mb-2">Feedback for Verrichtingen</h3>
+                              <Textarea
+                                placeholder="Add feedback for this category..."
+                                value={categoryFeedback[CATEGORIES.VERRICHTINGEN] || ''}
+                                onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.VERRICHTINGEN, e.target.value)}
+                                className="resize-none h-32"
+                              />
+                            </div>
                           </motion.div>
                         </TabsContent>
 
@@ -292,14 +334,6 @@ const TeacherDashboard = () => {
                                   </div>
                                 </div>
                                 
-                                <Textarea
-                                  placeholder="Add feedback for the student..."
-                                  value={feedback[subject.id] || ''}
-                                  onChange={(e) => handleFeedbackChange(subject.id, e.target.value)}
-                                  disabled={!subject.active}
-                                  className="resize-none h-20"
-                                />
-                                
                                 {!subject.active && (
                                   <p className="text-sm text-muted-foreground mt-2 italic">
                                     This subject is currently disabled by an administrator
@@ -307,6 +341,16 @@ const TeacherDashboard = () => {
                                 )}
                               </div>
                             ))}
+                            
+                            <div className="border rounded-lg p-4 mt-6">
+                              <h3 className="font-medium mb-2">Feedback for Roeitechniek</h3>
+                              <Textarea
+                                placeholder="Add feedback for this category..."
+                                value={categoryFeedback[CATEGORIES.ROEITECHNIEK] || ''}
+                                onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.ROEITECHNIEK, e.target.value)}
+                                className="resize-none h-32"
+                              />
+                            </div>
                           </motion.div>
                         </TabsContent>
 
@@ -362,14 +406,6 @@ const TeacherDashboard = () => {
                                   </div>
                                 </div>
                                 
-                                <Textarea
-                                  placeholder="Add feedback for the student..."
-                                  value={feedback[subject.id] || ''}
-                                  onChange={(e) => handleFeedbackChange(subject.id, e.target.value)}
-                                  disabled={!subject.active}
-                                  className="resize-none h-20"
-                                />
-                                
                                 {!subject.active && (
                                   <p className="text-sm text-muted-foreground mt-2 italic">
                                     This subject is currently disabled by an administrator
@@ -377,6 +413,16 @@ const TeacherDashboard = () => {
                                 )}
                               </div>
                             ))}
+                            
+                            <div className="border rounded-lg p-4 mt-6">
+                              <h3 className="font-medium mb-2">Feedback for Stuurkunst</h3>
+                              <Textarea
+                                placeholder="Add feedback for this category..."
+                                value={categoryFeedback[CATEGORIES.STUURKUNST] || ''}
+                                onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.STUURKUNST, e.target.value)}
+                                className="resize-none h-32"
+                              />
+                            </div>
                           </motion.div>
                         </TabsContent>
                       </AnimatePresence>
@@ -393,24 +439,39 @@ const TeacherDashboard = () => {
                   <CardContent>
                     <div className="space-y-4">
                       {tests.map((test) => (
-                        <div key={test.id} className="flex items-start space-x-2">
-                          <Checkbox
-                            id={`test-${test.id}`}
-                            checked={completedTests[test.id] || false}
-                            onCheckedChange={(checked) => 
-                              handleTestChange(test.id, checked === true)
-                            }
-                          />
+                        <div key={test.id} className="flex items-start justify-between">
                           <div className="grid gap-1.5 leading-none">
                             <Label
-                              htmlFor={`test-${test.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              className="text-sm font-medium leading-none"
                             >
                               {test.name}
                             </Label>
                             <p className="text-sm text-muted-foreground">
                               {test.description}
                             </p>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => handleTestDecrement(test.id)}
+                              disabled={!testCompletions[test.id]}
+                              className="h-8 w-8"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center font-medium">
+                              {testCompletions[test.id] || 0}
+                            </span>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => handleTestIncrement(test.id)}
+                              className="h-8 w-8"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}
