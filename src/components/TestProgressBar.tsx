@@ -1,5 +1,6 @@
 
 import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 interface TestProgressBarProps {
   value: number;
@@ -22,8 +23,7 @@ const TestProgressBar = ({ value, label }: TestProgressBarProps) => {
       </div>
       <Progress 
         value={value} 
-        className="h-2" 
-        indicatorClassName={getProgressColor(value)}
+        className={cn("h-2", getProgressColor(value))}
       />
     </div>
   );
