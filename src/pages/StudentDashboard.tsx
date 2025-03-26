@@ -10,6 +10,7 @@ import {
   getStudentTests,
   getStudentTestCompletionCount,
   getStudentLatestCategoryFeedback,
+  getUserById,
   CATEGORIES,
   tests,
 } from '@/utils/mockData';
