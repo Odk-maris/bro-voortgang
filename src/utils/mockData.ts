@@ -1,3 +1,4 @@
+
 // Mock data for the application
 // In a real app, this would be fetched from a database
 
@@ -355,4 +356,54 @@ export const updateTestCompletion = (
     
     return null;
   }
+};
+
+// User management functions
+export const addUser = (
+  username: string,
+  password: string,
+  name: string,
+  role: 'student' | 'teacher' | 'admin'
+) => {
+  const newUser = {
+    id: users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1,
+    username,
+    password,
+    name,
+    role
+  };
+  
+  users.push(newUser);
+  return newUser;
+};
+
+export const updateUser = (
+  id: number,
+  username: string,
+  password: string | null,
+  name: string,
+  role: 'student' | 'teacher' | 'admin'
+) => {
+  const userIndex = users.findIndex(user => user.id === id);
+  if (userIndex !== -1) {
+    users[userIndex] = {
+      ...users[userIndex],
+      username,
+      name,
+      role,
+      // Only update password if provided
+      ...(password ? { password } : {})
+    };
+    return users[userIndex];
+  }
+  return null;
+};
+
+export const deleteUser = (id: number) => {
+  const userIndex = users.findIndex(user => user.id === id);
+  if (userIndex !== -1) {
+    const deletedUser = users.splice(userIndex, 1)[0];
+    return deletedUser;
+  }
+  return null;
 };
