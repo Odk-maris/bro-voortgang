@@ -55,14 +55,10 @@ const TeacherDashboard = () => {
       });
       setSelectedTests(initialTestState);
       
-      const verrichtingenFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.VERRICHTINGEN);
-      const roeitechniekFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.ROEITECHNIEK);
-      const stuurkunstFeedback = getStudentCategoryFeedback(studentId, CATEGORIES.STUURKUNST);
-      
       setCategoryFeedback({
-        [CATEGORIES.VERRICHTINGEN]: verrichtingenFeedback.length > 0 ? verrichtingenFeedback[0].feedback : '',
-        [CATEGORIES.ROEITECHNIEK]: roeitechniekFeedback.length > 0 ? roeitechniekFeedback[0].feedback : '',
-        [CATEGORIES.STUURKUNST]: stuurkunstFeedback.length > 0 ? stuurkunstFeedback[0].feedback : ''
+        [CATEGORIES.VERRICHTINGEN]: '',
+        [CATEGORIES.ROEITECHNIEK]: '',
+        [CATEGORIES.STUURKUNST]: ''
       });
     }
   }, [selectedStudentId]);
