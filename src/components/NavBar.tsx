@@ -1,12 +1,14 @@
 
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LucideLogOut, LucideUser, LucideClipboardList, LucideBook, LucideSettings } from 'lucide-react';
+import { LucideLogOut, LucideUser, LucideClipboardList, LucideBook, LucideSettings, LucideMoon, LucideSun } from 'lucide-react';
 
 const NavBar = () => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
 
   if (!user) return null;
@@ -27,7 +29,7 @@ const NavBar = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-lg bg-white/80 border-b border-border animate-slide-down">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 border-b border-border animate-slide-down">
       <div className="container h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <motion.div
@@ -62,6 +64,20 @@ const NavBar = () => {
         </div>
         
         <div className="flex items-center gap-3">
+          <Button 
+            onClick={toggleTheme} 
+            variant="ghost" 
+            size="icon" 
+            className="h-9 w-9 rounded-full"
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            {theme === 'light' ? (
+              <LucideMoon className="h-4 w-4" />
+            ) : (
+              <LucideSun className="h-4 w-4" />
+            )}
+          </Button>
+          
           <span className="text-sm font-medium hidden sm:inline-block">
             <div className="flex items-center gap-1.5">
               <span className="text-muted-foreground">Welcome,</span>

@@ -238,7 +238,7 @@ const TeacherDashboard = () => {
                             <div className="border rounded-lg p-4 mt-6">
                               <h3 className="font-medium mb-2">Feedback for Verrichtingen</h3>
                               <Textarea
-                                placeholder="Vul hier je feedback in als je iets wilt delen"
+                                placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
                                 value={categoryFeedback[CATEGORIES.VERRICHTINGEN] || ''}
                                 onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.VERRICHTINGEN, e.target.value)}
                                 className="resize-none h-32"
@@ -297,7 +297,7 @@ const TeacherDashboard = () => {
                             <div className="border rounded-lg p-4 mt-6">
                               <h3 className="font-medium mb-2">Feedback for Roeitechniek</h3>
                               <Textarea
-                                placeholder="Vul hier je feedback in als je iets wilt delen"
+                                placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
                                 value={categoryFeedback[CATEGORIES.ROEITECHNIEK] || ''}
                                 onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.ROEITECHNIEK, e.target.value)}
                                 className="resize-none h-32"
@@ -356,7 +356,7 @@ const TeacherDashboard = () => {
                             <div className="border rounded-lg p-4 mt-6">
                               <h3 className="font-medium mb-2">Feedback for Stuurkunst</h3>
                               <Textarea
-                                placeholder="Vul hier je feedback in als je iets wilt delen"
+                                placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
                                 value={categoryFeedback[CATEGORIES.STUURKUNST] || ''}
                                 onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.STUURKUNST, e.target.value)}
                                 className="resize-none h-32"
