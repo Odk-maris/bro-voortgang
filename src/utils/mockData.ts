@@ -1,3 +1,4 @@
+
 // Mock data for the application
 // In a real app, this would be fetched from a database
 
@@ -17,44 +18,44 @@ export const GROUPS = {
 
 // Subject definitions
 export const subjects = [
-  // Verrichtingen (14)
-  { id: 1, name: 'Bootbehandeling', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 2, name: 'Riemenbehandeling', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 3, name: 'In- en uitstappen', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 4, name: 'Wegvaren', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 5, name: 'Aanleggen', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 6, name: 'Strijken', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 7, name: 'Ronden', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 8, name: 'Halend aanleggen', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 9, name: 'Houden', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 10, name: 'Manoeuvres waterzijde', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 11, name: 'Noodstop', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 12, name: 'Slippen', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 13, name: 'Wisselen in de boot', category: CATEGORIES.VERRICHTINGEN, active: true },
-  { id: 14, name: 'Bootvervoer', category: CATEGORIES.VERRICHTINGEN, active: true },
+  // Verrichtingen (11)
+  { id: 1, name: 'Boot uit- en inbrengen', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 2, name: 'Riemen en roer aanbrengen', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 3, name: 'Instappen', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 4, name: 'Voetenboord afstellen', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 5, name: 'Veilig boord houden bij afvaren', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 6, name: 'Geslipt strijken bij afvaren', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 7, name: 'Strijken', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 8, name: 'Ronden', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 9, name: 'Vastroeien en houden', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 10, name: 'Stuurboord en bakboord', category: CATEGORIES.VERRICHTINGEN, active: true },
+  { id: 11, name: 'Roeiplezier', category: CATEGORIES.VERRICHTINGEN, active: true },
   
-  // Roeitechniek (11)
-  { id: 15, name: 'Inpik', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 16, name: 'Doorhaal', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 17, name: 'Uitpik', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 18, name: 'Recover', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 19, name: 'Balans', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 20, name: 'Ritme', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 21, name: 'Kracht', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 22, name: 'Ademhaling', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 23, name: 'Gelijk roeien', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 24, name: 'Houding', category: CATEGORIES.ROEITECHNIEK, active: true },
-  { id: 25, name: 'Techniekkennis', category: CATEGORIES.ROEITECHNIEK, active: true },
+  // Roeitechniek (15)
+  { id: 15, name: "Commando's opvolgen", category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 16, name: 'Aanleggen als roeier', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 17, name: 'Vallen en slippen', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 18, name: 'Rechtop zitten', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 19, name: 'Armen en polsen recht bij begin roeihaal', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 20, name: 'Klippen', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 21, name: 'Positie handen tijdens roeihaal', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 22, name: 'Bladen verticaal houden bij inpik', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 23, name: 'Kanteling rug naar voren en achteren, 15%', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 24, name: 'Bewegingsvolgorde roeihaal', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 25, name: 'Eerst inpikken, dan trappen', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 26, name: 'Bladen vlak boven/onder water', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 27, name: 'Lengte van de roeihaal', category: CATEGORIES.ROEITECHNIEK, active: true },
+  { id: 28, name: 'Slag volgen/samen roeien', category: CATEGORIES.ROEITECHNIEK, active: true },
   
   // Stuurkunst (8)
-  { id: 26, name: 'Koersvastheid', category: CATEGORIES.STUURKUNST, active: true },
-  { id: 27, name: 'Commando\'s', category: CATEGORIES.STUURKUNST, active: true },
-  { id: 28, name: 'Startprocedure', category: CATEGORIES.STUURKUNST, active: true },
-  { id: 29, name: 'Brugpassage', category: CATEGORIES.STUURKUNST, active: true },
-  { id: 30, name: 'Vaarregels', category: CATEGORIES.STUURKUNST, active: true },
-  { id: 31, name: 'Omgaan met omstandigheden', category: CATEGORIES.STUURKUNST, active: true },
-  { id: 32, name: 'Botenhuis kennis', category: CATEGORIES.STUURKUNST, active: true },
-  { id: 33, name: 'Veiligheid', category: CATEGORIES.STUURKUNST, active: true },
+  { id: 30, name: 'Vlot geven van correcte commando\'s', category: CATEGORIES.STUURKUNST, active: true },
+  { id: 31, name: 'Bedienen roer', category: CATEGORIES.STUURKUNST, active: true },
+  { id: 32, name: 'Positioneren van de boot', category: CATEGORIES.STUURKUNST, active: true },
+  { id: 33, name: 'Vertrekken als stuur van steiger of vlot', category: CATEGORIES.STUURKUNST, active: true },
+  { id: 34, name: 'Aanleggen als stuur bij steiger of vlot', category: CATEGORIES.STUURKUNST, active: true },
+  { id: 35, name: 'Plannen van manoeuvres', category: CATEGORIES.STUURKUNST, active: true },
+  { id: 36, name: 'Rekening houden met invoed van de wind', category: CATEGORIES.STUURKUNST, active: true },
+  { id: 37, name: 'Veiligheid op het water en toepassen vaarregels', category: CATEGORIES.STUURKUNST, active: true },
 ];
 
 // Tests
@@ -177,7 +178,7 @@ export const grades = [
   { id: 5, studentId: 1, subjectId: 3, grade: 2, date: '2023-06-15', teacherId: 4, feedback: 'Flinke verbetering gezien.' },
   { id: 6, studentId: 1, subjectId: 15, grade: 3, date: '2023-05-22', teacherId: 3, feedback: 'Perfecte techniek!' },
   { id: 7, studentId: 1, subjectId: 16, grade: 2, date: '2023-05-22', teacherId: 3, feedback: 'Goed, blijf oefenen.' },
-  { id: 8, studentId: 1, subjectId: 26, grade: 3, date: '2023-06-05', teacherId: 4, feedback: 'Uitstekende stuurvaardigheden.' },
+  { id: 8, studentId: 1, subjectId: 30, grade: 3, date: '2023-06-05', teacherId: 4, feedback: 'Uitstekende stuurvaardigheden.' },
   
   // Student 2 grades
   { id: 9, studentId: 2, subjectId: 1, grade: 3, date: '2023-05-15', teacherId: 3, feedback: 'Uitstekend werk!' },
@@ -186,7 +187,7 @@ export const grades = [
   { id: 12, studentId: 2, subjectId: 15, grade: 1, date: '2023-05-22', teacherId: 3, feedback: 'Meer aandacht nodig voor techniek.' },
   { id: 13, studentId: 2, subjectId: 15, grade: 2, date: '2023-06-10', teacherId: 3, feedback: 'Betere techniek, blijf oefenen.' },
   { id: 14, studentId: 2, subjectId: 16, grade: 2, date: '2023-05-22', teacherId: 3, feedback: 'Goed, maar kan beter.' },
-  { id: 15, studentId: 2, subjectId: 26, grade: 2, date: '2023-06-05', teacherId: 4, feedback: 'Goede stuurvaardigheden.' },
+  { id: 15, studentId: 2, subjectId: 30, grade: 2, date: '2023-06-05', teacherId: 4, feedback: 'Goede stuurvaardigheden.' },
 ];
 
 // Student test completions (modified to track multiple completions)
@@ -383,7 +384,7 @@ export const addUser = (
     ...(role === 'student' ? { groep: groep || GROUPS.NONE } : {})
   };
   
-  users.push(newUser);
+  users.push(newUser as any);
   return newUser;
 };
 
@@ -397,7 +398,7 @@ export const updateUser = (
 ) => {
   const userIndex = users.findIndex(user => user.id === id);
   if (userIndex !== -1) {
-    users[userIndex] = {
+    const updatedUser = {
       ...users[userIndex],
       username,
       name,
@@ -407,6 +408,8 @@ export const updateUser = (
       // Only include groep for students
       ...(role === 'student' ? { groep: groep || GROUPS.NONE } : {})
     };
+    
+    users[userIndex] = updatedUser as any;
     return users[userIndex];
   }
   return null;
@@ -420,3 +423,4 @@ export const deleteUser = (id: number) => {
   }
   return null;
 };
+
