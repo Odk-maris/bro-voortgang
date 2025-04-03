@@ -140,6 +140,8 @@ const TeacherDashboard = () => {
   const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK).filter(subject => subject.active);
   const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST).filter(subject => subject.active);
 
+  const selectedStudent = selectedStudentId ? getUserById(parseInt(selectedStudentId)) : null;
+
   return (
     <DashboardLayout allowedRoles={['teacher', 'admin']}>
       <div className="container py-6">
@@ -169,6 +171,17 @@ const TeacherDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
+            {selectedStudent && (
+              <div className="mb-4 flex items-center">
+                <h2 className="text-xl">{selectedStudent.name}</h2>
+                {selectedStudent.role === 'student' && selectedStudent.groep && selectedStudent.groep !== 'none' && (
+                  <Badge variant="outline" className="ml-3 bg-purple-100 text-purple-800 border-purple-200">
+                    Groep: {selectedStudent.groep}
+                  </Badge>
+                )}
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
               <div className="lg:col-span-2">
                 <Card>

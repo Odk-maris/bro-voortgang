@@ -4,7 +4,8 @@ import {
   users, 
   addUser, 
   updateUser, 
-  deleteUser 
+  deleteUser,
+  GROUPS
 } from '@/utils/mockData';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,8 @@ const UserManagement = () => {
     username: '',
     name: '',
     password: '',
-    role: 'student' as 'student' | 'teacher' | 'admin'
+    role: 'student' as 'student' | 'teacher' | 'admin',
+    groep: GROUPS.NONE
   });
   
   const [editUser, setEditUser] = useState({
@@ -33,7 +35,8 @@ const UserManagement = () => {
     username: '',
     name: '',
     password: '',
-    role: 'student' as 'student' | 'teacher' | 'admin'
+    role: 'student' as 'student' | 'teacher' | 'admin',
+    groep: GROUPS.NONE
   });
   
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
@@ -44,14 +47,22 @@ const UserManagement = () => {
       return;
     }
     
-    addUser(newUser.username, newUser.password, newUser.name, newUser.role);
+    addUser(
+      newUser.username, 
+      newUser.password, 
+      newUser.name, 
+      newUser.role, 
+      newUser.role === 'student' ? newUser.groep : undefined
+    );
+    
     toast.success('User added successfully');
     setIsAddOpen(false);
     setNewUser({
       username: '',
       name: '',
       password: '',
-      role: 'student'
+      role: 'student',
+      groep: GROUPS.NONE
     });
     setRefreshKey(prev => prev + 1);
   };
@@ -70,7 +81,8 @@ const UserManagement = () => {
       editUser.username, 
       passwordToUpdate, 
       editUser.name, 
-      editUser.role
+      editUser.role,
+      editUser.role === 'student' ? editUser.groep : undefined
     );
     
     toast.success('User updated successfully');
@@ -94,7 +106,8 @@ const UserManagement = () => {
       username: user.username,
       name: user.name,
       password: '', // Don't show existing password
-      role: user.role
+      role: user.role,
+      groep: user.role === 'student' ? (user.groep || GROUPS.NONE) : GROUPS.NONE
     });
     setIsEditOpen(true);
   };
@@ -113,6 +126,18 @@ const UserManagement = () => {
       case 'student':
       default:
         return 'bg-green-100 text-green-800 border-green-200';
+    }
+  };
+  
+  const getGroupBadgeColor = (groep: string) => {
+    switch(groep) {
+      case GROUPS.DIZA:
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case GROUPS.DOZO:
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case GROUPS.NONE:
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
   
@@ -193,6 +218,27 @@ const UserManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {newUser.role === 'student' && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="new-groep" className="text-right">
+                    Groep
+                  </Label>
+                  <Select 
+                    value={newUser.groep} 
+                    onValueChange={(value: string) => setNewUser({...newUser, groep: value})}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select groep" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={GROUPS.DIZA}>Diza</SelectItem>
+                      <SelectItem value={GROUPS.DOZO}>Dozo</SelectItem>
+                      <SelectItem value={GROUPS.NONE}>None</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             
             <DialogFooter>
@@ -212,6 +258,7 @@ const UserManagement = () => {
               <TableHead>Username</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Groep</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -225,6 +272,13 @@ const UserManagement = () => {
                   <span className={`px-2 py-1 rounded text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                     {user.role}
                   </span>
+                </TableCell>
+                <TableCell>
+                  {user.role === 'student' && (
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getGroupBadgeColor(user.groep || GROUPS.NONE)}`}>
+                      {user.groep || 'None'}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
@@ -309,6 +363,27 @@ const UserManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+            
+            {editUser.role === 'student' && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-groep" className="text-right">
+                  Groep
+                </Label>
+                <Select 
+                  value={editUser.groep} 
+                  onValueChange={(value: string) => setEditUser({...editUser, groep: value})}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select groep" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={GROUPS.DIZA}>Diza</SelectItem>
+                    <SelectItem value={GROUPS.DOZO}>Dozo</SelectItem>
+                    <SelectItem value={GROUPS.NONE}>None</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           
           <DialogFooter>

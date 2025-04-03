@@ -1,4 +1,3 @@
-
 // Mock data for the application
 // In a real app, this would be fetched from a database
 
@@ -7,6 +6,13 @@ export const CATEGORIES = {
   VERRICHTINGEN: 'verrichtingen',
   ROEITECHNIEK: 'roeitechniek',
   STUURKUNST: 'stuurkunst'
+};
+
+// Student groups
+export const GROUPS = {
+  DIZA: 'diza',
+  DOZO: 'dozo',
+  NONE: 'none'
 };
 
 // Subject definitions
@@ -72,14 +78,16 @@ export const users = [
     username: 'student1', 
     password: 'password1', 
     name: 'Jan Jansen', 
-    role: 'student' 
+    role: 'student',
+    groep: GROUPS.DIZA
   },
   { 
     id: 2, 
     username: 'student2', 
     password: 'password2', 
     name: 'Emma de Vries', 
-    role: 'student' 
+    role: 'student',
+    groep: GROUPS.DOZO
   },
   { 
     id: 3, 
@@ -363,14 +371,16 @@ export const addUser = (
   username: string,
   password: string,
   name: string,
-  role: 'student' | 'teacher' | 'admin'
+  role: 'student' | 'teacher' | 'admin',
+  groep?: string
 ) => {
   const newUser = {
     id: users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1,
     username,
     password,
     name,
-    role
+    role,
+    ...(role === 'student' ? { groep: groep || GROUPS.NONE } : {})
   };
   
   users.push(newUser);
@@ -382,7 +392,8 @@ export const updateUser = (
   username: string,
   password: string | null,
   name: string,
-  role: 'student' | 'teacher' | 'admin'
+  role: 'student' | 'teacher' | 'admin',
+  groep?: string
 ) => {
   const userIndex = users.findIndex(user => user.id === id);
   if (userIndex !== -1) {
@@ -392,7 +403,9 @@ export const updateUser = (
       name,
       role,
       // Only update password if provided
-      ...(password ? { password } : {})
+      ...(password ? { password } : {}),
+      // Only include groep for students
+      ...(role === 'student' ? { groep: groep || GROUPS.NONE } : {})
     };
     return users[userIndex];
   }
