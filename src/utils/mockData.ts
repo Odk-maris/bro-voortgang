@@ -1,3 +1,4 @@
+
 // Mock data for the application
 // In a real app, this would be fetched from a database
 
@@ -6,12 +7,6 @@ export const CATEGORIES = {
   VERRICHTINGEN: 'verrichtingen',
   ROEITECHNIEK: 'roeitechniek',
   STUURKUNST: 'stuurkunst'
-};
-
-// Group options for students
-export const GROUPS = {
-  DIZA: 'diza',
-  NONE: ''  // Empty string for users without a group
 };
 
 // Subject definitions
@@ -77,16 +72,14 @@ export const users = [
     username: 'student1', 
     password: 'password1', 
     name: 'Jan Jansen', 
-    role: 'student',
-    groep: GROUPS.DIZA
+    role: 'student' 
   },
   { 
     id: 2, 
     username: 'student2', 
     password: 'password2', 
     name: 'Emma de Vries', 
-    role: 'student',
-    groep: GROUPS.NONE
+    role: 'student' 
   },
   { 
     id: 3, 
@@ -188,16 +181,16 @@ export const grades = [
   { id: 15, studentId: 2, subjectId: 26, grade: 2, date: '2023-06-05', teacherId: 4, feedback: 'Goede stuurvaardigheden.' },
 ];
 
-// Student test completions
+// Student test completions (modified to track multiple completions)
 export const testCompletions = [
   { id: 1, studentId: 1, testId: 1, completed: true, date: '2023-04-10' },
-  { id: 2, studentId: 1, testId: 1, completed: true, date: '2023-05-15' },
+  { id: 2, studentId: 1, testId: 1, completed: true, date: '2023-05-15' }, // Second completion of test 1
   { id: 3, studentId: 1, testId: 2, completed: true, date: '2023-04-15' },
   { id: 4, studentId: 1, testId: 3, completed: true, date: '2023-05-10' },
   { id: 5, studentId: 1, testId: 4, completed: false, date: null },
   { id: 6, studentId: 2, testId: 1, completed: true, date: '2023-04-12' },
   { id: 7, studentId: 2, testId: 2, completed: true, date: '2023-04-18' },
-  { id: 8, studentId: 2, testId: 2, completed: true, date: '2023-05-20' },
+  { id: 8, studentId: 2, testId: 2, completed: true, date: '2023-05-20' }, // Second completion of test 2
   { id: 9, studentId: 2, testId: 3, completed: false, date: null },
 ];
 
@@ -243,7 +236,7 @@ export const getStudentAverageGrade = (studentId: number, subjectId: number) => 
   const studentSubjectGrades = grades
     .filter(grade => grade.studentId === studentId && grade.subjectId === subjectId)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3);
+    .slice(0, 3); // Only use the last 3 grades for average
   
   if (studentSubjectGrades.length === 0) return 0;
   
@@ -370,16 +363,14 @@ export const addUser = (
   username: string,
   password: string,
   name: string,
-  role: 'student' | 'teacher' | 'admin',
-  groep: string = ''
+  role: 'student' | 'teacher' | 'admin'
 ) => {
   const newUser = {
     id: users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1,
     username,
     password,
     name,
-    role,
-    ...(role === 'student' ? { groep } : {})
+    role
   };
   
   users.push(newUser);
@@ -391,8 +382,7 @@ export const updateUser = (
   username: string,
   password: string | null,
   name: string,
-  role: 'student' | 'teacher' | 'admin',
-  groep: string = ''
+  role: 'student' | 'teacher' | 'admin'
 ) => {
   const userIndex = users.findIndex(user => user.id === id);
   if (userIndex !== -1) {
@@ -401,8 +391,8 @@ export const updateUser = (
       username,
       name,
       role,
-      ...(password ? { password } : {}),
-      ...(role === 'student' ? { groep } : {})
+      // Only update password if provided
+      ...(password ? { password } : {})
     };
     return users[userIndex];
   }

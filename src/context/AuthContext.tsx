@@ -9,7 +9,6 @@ interface User {
   username: string;
   name: string;
   role: 'student' | 'teacher' | 'admin';
-  groep?: string; // Optional group property for students
 }
 
 interface AuthContextType {
@@ -39,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               username: foundUser.username,
               name: foundUser.name,
               role: foundUser.role as 'student' | 'teacher' | 'admin',
-              ...(foundUser.role === 'student' && foundUser.groep ? { groep: foundUser.groep } : {})
             });
           } else {
             localStorage.removeItem('user');
@@ -68,7 +66,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               username: foundUser.username,
               name: foundUser.name,
               role: foundUser.role as 'student' | 'teacher' | 'admin',
-              ...(foundUser.role === 'student' && foundUser.groep ? { groep: foundUser.groep } : {})
             };
             
             localStorage.setItem('user', JSON.stringify(userData));

@@ -4,8 +4,7 @@ import {
   users, 
   addUser, 
   updateUser, 
-  deleteUser,
-  GROUPS
+  deleteUser 
 } from '@/utils/mockData';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Pencil, Trash, UserPlus } from 'lucide-react';
 
@@ -27,8 +25,7 @@ const UserManagement = () => {
     username: '',
     name: '',
     password: '',
-    role: 'student' as 'student' | 'teacher' | 'admin',
-    groep: ''
+    role: 'student' as 'student' | 'teacher' | 'admin'
   });
   
   const [editUser, setEditUser] = useState({
@@ -36,8 +33,7 @@ const UserManagement = () => {
     username: '',
     name: '',
     password: '',
-    role: 'student' as 'student' | 'teacher' | 'admin',
-    groep: ''
+    role: 'student' as 'student' | 'teacher' | 'admin'
   });
   
   const [userToDelete, setUserToDelete] = useState<number | null>(null);
@@ -48,27 +44,14 @@ const UserManagement = () => {
       return;
     }
     
-    if (newUser.role === 'student' && !newUser.groep) {
-      toast.error('Group selection is required for students');
-      return;
-    }
-    
-    addUser(
-      newUser.username, 
-      newUser.password, 
-      newUser.name, 
-      newUser.role,
-      newUser.groep
-    );
-    
+    addUser(newUser.username, newUser.password, newUser.name, newUser.role);
     toast.success('User added successfully');
     setIsAddOpen(false);
     setNewUser({
       username: '',
       name: '',
       password: '',
-      role: 'student',
-      groep: ''
+      role: 'student'
     });
     setRefreshKey(prev => prev + 1);
   };
@@ -76,11 +59,6 @@ const UserManagement = () => {
   const handleEditUser = () => {
     if (!editUser.username || !editUser.name) {
       toast.error('Username and name are required');
-      return;
-    }
-    
-    if (editUser.role === 'student' && !editUser.groep) {
-      toast.error('Group selection is required for students');
       return;
     }
     
@@ -92,8 +70,7 @@ const UserManagement = () => {
       editUser.username, 
       passwordToUpdate, 
       editUser.name, 
-      editUser.role,
-      editUser.groep
+      editUser.role
     );
     
     toast.success('User updated successfully');
@@ -117,8 +94,7 @@ const UserManagement = () => {
       username: user.username,
       name: user.name,
       password: '', // Don't show existing password
-      role: user.role,
-      groep: user.groep || ''
+      role: user.role
     });
     setIsEditOpen(true);
   };
@@ -138,10 +114,6 @@ const UserManagement = () => {
       default:
         return 'bg-green-100 text-green-800 border-green-200';
     }
-  };
-  
-  const showGroupField = (role: 'student' | 'teacher' | 'admin') => {
-    return role === 'student';
   };
   
   return (
@@ -209,9 +181,7 @@ const UserManagement = () => {
                 </Label>
                 <Select 
                   value={newUser.role} 
-                  onValueChange={(value: 'student' | 'teacher' | 'admin') => 
-                    setNewUser({...newUser, role: value, groep: value !== 'student' ? '' : newUser.groep})
-                  }
+                  onValueChange={(value: 'student' | 'teacher' | 'admin') => setNewUser({...newUser, role: value})}
                 >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select role" />
@@ -223,28 +193,6 @@ const UserManagement = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
-              {showGroupField(newUser.role) && (
-                <div className="grid grid-cols-4 items-start gap-4">
-                  <Label className="text-right pt-2">
-                    Group
-                  </Label>
-                  <RadioGroup 
-                    value={newUser.groep}
-                    onValueChange={(value) => setNewUser({...newUser, groep: value})}
-                    className="col-span-3 space-y-1"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value={GROUPS.DIZA} id="group-diza" />
-                      <Label htmlFor="group-diza">DIZA</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value={GROUPS.NONE} id="group-none" />
-                      <Label htmlFor="group-none">None</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
             </div>
             
             <DialogFooter>
@@ -264,7 +212,6 @@ const UserManagement = () => {
               <TableHead>Username</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead>Group</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -278,11 +225,6 @@ const UserManagement = () => {
                   <span className={`px-2 py-1 rounded text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                     {user.role}
                   </span>
-                </TableCell>
-                <TableCell>
-                  {user.role === 'student' && (
-                    user.groep ? user.groep : 'None'
-                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
@@ -355,9 +297,7 @@ const UserManagement = () => {
               </Label>
               <Select 
                 value={editUser.role} 
-                onValueChange={(value: 'student' | 'teacher' | 'admin') => 
-                  setEditUser({...editUser, role: value, groep: value !== 'student' ? '' : editUser.groep})
-                }
+                onValueChange={(value: 'student' | 'teacher' | 'admin') => setEditUser({...editUser, role: value})}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select role" />
@@ -369,28 +309,6 @@ const UserManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-            
-            {showGroupField(editUser.role) && (
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label className="text-right pt-2">
-                  Group
-                </Label>
-                <RadioGroup 
-                  value={editUser.groep}
-                  onValueChange={(value) => setEditUser({...editUser, groep: value})}
-                  className="col-span-3 space-y-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={GROUPS.DIZA} id="edit-group-diza" />
-                    <Label htmlFor="edit-group-diza">DIZA</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={GROUPS.NONE} id="edit-group-none" />
-                    <Label htmlFor="edit-group-none">None</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            )}
           </div>
           
           <DialogFooter>
