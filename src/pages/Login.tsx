@@ -27,30 +27,23 @@ const Login = () => {
     if (user.role === 'admin') return <Navigate to="/admin" />;
   }
 
-  // Demo account info for development purposes
-  const demoAccounts = [
-    { username: 'student1', password: 'password1', role: 'Student' },
-    { username: 'teacher1', password: 'password3', role: 'Teacher' },
-    { username: 'admin1', password: 'password5', role: 'Admin' },
-  ];
-
   return (
     <motion.div 
-      className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-white to-slate-50"
+      className="min-h-screen flex items-center justify-center p-4 bg-gray-400"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       <div className="w-full max-w-md">
         <motion.div
-          className="bg-white/80 backdrop-blur-lg rounded-2xl border border-slate-200/80 shadow-xl p-8"
+          className="bg-white/95 backdrop-blur-lg rounded-2xl border border-slate-200/80 shadow-xl p-8"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.4 }}
         >
           <div className="text-center mb-8">
             <motion.h1 
-              className="text-2xl font-semibold tracking-tight"
+              className="text-2xl font-semibold tracking-tight text-gray-900"
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.4 }}
@@ -58,12 +51,12 @@ const Login = () => {
               Student Dashboard
             </motion.h1>
             <motion.p 
-              className="text-sm text-muted-foreground mt-1"
+              className="text-sm text-gray-800 mt-1"
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3, duration: 0.4 }}
             >
-              Sign in to access your dashboard
+              Log in voor je BRO voortgang!
             </motion.p>
           </div>
 
@@ -75,7 +68,7 @@ const Login = () => {
             transition={{ delay: 0.4, duration: 0.4 }}
           >
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username" className="text-gray-900">Username</Label>
               <Input
                 id="username"
                 type="text"
@@ -90,7 +83,7 @@ const Login = () => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className="text-gray-900">Password</Label>
               </div>
               <Input
                 id="password"
@@ -118,36 +111,6 @@ const Login = () => {
               )}
             </Button>
           </motion.form>
-
-          <motion.div 
-            className="mt-8 border-t pt-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.4 }}
-          >
-            <p className="text-xs text-center text-muted-foreground mb-3">
-              Demo accounts (for testing)
-            </p>
-            <div className="grid grid-cols-3 gap-3">
-              {demoAccounts.map((account, i) => (
-                <motion.button
-                  key={account.username}
-                  type="button"
-                  className="flex flex-col items-center text-xs p-2 border rounded-lg hover:bg-slate-50 transition-colors"
-                  onClick={() => {
-                    setUsername(account.username);
-                    setPassword(account.password);
-                  }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 + i * 0.1, duration: 0.3 }}
-                >
-                  <span className="font-medium mb-1">{account.role}</span>
-                  <span className="text-slate-500">{account.username}</span>
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
         </motion.div>
       </div>
     </motion.div>
