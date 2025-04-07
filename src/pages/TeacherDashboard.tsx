@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -91,7 +92,7 @@ const TeacherDashboard = () => {
 
   const handleSaveGrades = async () => {
     if (!selectedStudentId) {
-      toast.error('Please select a student');
+      toast.error('Selecteer een cursist');
       return;
     }
 
@@ -115,8 +116,8 @@ const TeacherDashboard = () => {
         }
       });
 
-      toast.success('Saved successfully', {
-        description: 'Student grades, feedback, and test completions have been updated.',
+      toast.success('Succesvol opgeslagen', {
+        description: 'De beoordelingen, feedback en bruggen zijn bijgewerkt.',
       });
       
       setSelectedGrades({});
@@ -128,8 +129,8 @@ const TeacherDashboard = () => {
       setSelectedTests(resetTests);
       
     } catch (error) {
-      toast.error('Failed to save', {
-        description: 'There was an error saving the data. Please try again.',
+      toast.error('Opslaan mislukt', {
+        description: 'Er is een fout opgetreden bij het opslaan van de gegevens. Probeer het opnieuw.',
       });
     } finally {
       setLoading(false);
@@ -145,15 +146,15 @@ const TeacherDashboard = () => {
   return (
     <DashboardLayout allowedRoles={['teacher', 'admin']}>
       <div className="container py-6">
-        <h1 className="text-2xl font-semibold mb-6">Student Grading</h1>
+        <h1 className="text-2xl font-semibold mb-6">Beoordeling invullen</h1>
         
         <div className="mb-6">
           <Label htmlFor="student-select" className="block mb-2">
-            Select Student
+            Kies Cursist
           </Label>
           <Select value={selectedStudentId} onValueChange={handleStudentChange}>
             <SelectTrigger id="student-select" className="w-full md:w-80">
-              <SelectValue placeholder="Select a student" />
+              <SelectValue placeholder="Kies cursist" />
             </SelectTrigger>
             <SelectContent>
               {students.map((student) => (
@@ -186,7 +187,7 @@ const TeacherDashboard = () => {
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Subject Grading</CardTitle>
+                    <CardTitle>Onderdelen beoordelen</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -245,7 +246,7 @@ const TeacherDashboard = () => {
                             ))}
                             
                             <div className="border rounded-lg p-4 mt-6">
-                              <h3 className="font-medium mb-2">Feedback for Verrichtingen</h3>
+                              <h3 className="font-medium mb-2">Feedback voor Verrichtingen</h3>
                               <Textarea
                                 placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
                                 value={categoryFeedback[CATEGORIES.VERRICHTINGEN] || ''}
@@ -304,7 +305,7 @@ const TeacherDashboard = () => {
                             ))}
                             
                             <div className="border rounded-lg p-4 mt-6">
-                              <h3 className="font-medium mb-2">Feedback for Roeitechniek</h3>
+                              <h3 className="font-medium mb-2">Feedback voor Roeitechniek</h3>
                               <Textarea
                                 placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
                                 value={categoryFeedback[CATEGORIES.ROEITECHNIEK] || ''}
@@ -363,7 +364,7 @@ const TeacherDashboard = () => {
                             ))}
                             
                             <div className="border rounded-lg p-4 mt-6">
-                              <h3 className="font-medium mb-2">Feedback for Stuurkunst</h3>
+                              <h3 className="font-medium mb-2">Feedback voor Stuurkunst</h3>
                               <Textarea
                                 placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
                                 value={categoryFeedback[CATEGORIES.STUURKUNST] || ''}
@@ -382,7 +383,7 @@ const TeacherDashboard = () => {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Test Completion</CardTitle>
+                    <CardTitle>Bruggen gedaan</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -407,7 +408,7 @@ const TeacherDashboard = () => {
                             </p>
                             {getStudentTestCompletionCount(parseInt(selectedStudentId), test.id) > 0 && (
                               <Badge variant="outline" className="mt-1 text-xs bg-green-100 text-green-800 border-green-200 w-fit">
-                                Completed {getStudentTestCompletionCount(parseInt(selectedStudentId), test.id)} times previously
+                                {getStudentTestCompletionCount(parseInt(selectedStudentId), test.id)} keer gedaan
                               </Badge>
                             )}
                           </div>
@@ -428,9 +429,9 @@ const TeacherDashboard = () => {
                 {loading ? (
                   <>
                     <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2"></span>
-                    Saving...
+                    Opslaan...
                   </>
-                ) : 'Save Student Progress'}
+                ) : 'Voortgang opslaan'}
               </Button>
             </div>
           </motion.div>

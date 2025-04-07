@@ -43,7 +43,7 @@ const UserManagement = () => {
   
   const handleAddUser = () => {
     if (!newUser.username || !newUser.name || !newUser.password) {
-      toast.error('All fields are required');
+      toast.error('Alle velden zijn verplicht');
       return;
     }
     
@@ -55,7 +55,7 @@ const UserManagement = () => {
       newUser.role === 'student' ? newUser.groep : undefined
     );
     
-    toast.success('User added successfully');
+    toast.success('Gebruiker succesvol toegevoegd');
     setIsAddOpen(false);
     setNewUser({
       username: '',
@@ -69,7 +69,7 @@ const UserManagement = () => {
   
   const handleEditUser = () => {
     if (!editUser.username || !editUser.name) {
-      toast.error('Username and name are required');
+      toast.error('Gebruikersnaam en naam zijn verplicht');
       return;
     }
     
@@ -85,7 +85,7 @@ const UserManagement = () => {
       editUser.role === 'student' ? editUser.groep : undefined
     );
     
-    toast.success('User updated successfully');
+    toast.success('Gebruiker succesvol bijgewerkt');
     setIsEditOpen(false);
     setRefreshKey(prev => prev + 1);
   };
@@ -93,7 +93,7 @@ const UserManagement = () => {
   const handleDeleteUser = () => {
     if (userToDelete) {
       deleteUser(userToDelete);
-      toast.success('User deleted successfully');
+      toast.success('Gebruiker succesvol verwijderd');
       setIsDeleteOpen(false);
       setUserToDelete(null);
       setRefreshKey(prev => prev + 1);
@@ -144,28 +144,28 @@ const UserManagement = () => {
   return (
     <div className="space-y-6" key={refreshKey}>
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">User Management</h2>
+        <h2 className="text-xl font-semibold">Gebruikers beheren</h2>
         
         {/* Add User Dialog */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-1">
               <UserPlus className="h-4 w-4" />
-              Add New User
+              Voeg nieuwe gebruiker toe
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New User</DialogTitle>
+              <DialogTitle>Voeg nieuwe gebruiker toe</DialogTitle>
               <DialogDescription>
-                Create a new user account. All fields are required.
+                Maak een nieuw gebruikersaccount aan. Alle velden zijn verplicht.
               </DialogDescription>
             </DialogHeader>
             
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="new-username" className="text-right">
-                  Username
+                  Gebruikersnaam
                 </Label>
                 <Input
                   id="new-username"
@@ -177,7 +177,7 @@ const UserManagement = () => {
               
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="new-name" className="text-right">
-                  Name
+                  Naam
                 </Label>
                 <Input
                   id="new-name"
@@ -189,7 +189,7 @@ const UserManagement = () => {
               
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="new-password" className="text-right">
-                  Password
+                  Wachtwoord
                 </Label>
                 <Input
                   id="new-password"
@@ -202,18 +202,18 @@ const UserManagement = () => {
               
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="new-role" className="text-right">
-                  Role
+                  Rol
                 </Label>
                 <Select 
                   value={newUser.role} 
                   onValueChange={(value: 'student' | 'teacher' | 'admin') => setNewUser({...newUser, role: value})}
                 >
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue placeholder="Selecteer rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="teacher">Teacher</SelectItem>
+                    <SelectItem value="student">Cursist</SelectItem>
+                    <SelectItem value="teacher">Instructeur</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -229,12 +229,12 @@ const UserManagement = () => {
                     onValueChange={(value: string) => setNewUser({...newUser, groep: value})}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select groep" />
+                      <SelectValue placeholder="Selecteer groep" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={GROUPS.DIZA}>Diza</SelectItem>
                       <SelectItem value={GROUPS.DOZO}>Dozo</SelectItem>
-                      <SelectItem value={GROUPS.NONE}>None</SelectItem>
+                      <SelectItem value={GROUPS.NONE}>Geen</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -242,8 +242,8 @@ const UserManagement = () => {
             </div>
             
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddUser}>Create User</Button>
+              <Button variant="outline" onClick={() => setIsAddOpen(false)}>Annuleren</Button>
+              <Button onClick={handleAddUser}>Gebruiker aanmaken</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -255,11 +255,11 @@ const UserManagement = () => {
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
+              <TableHead>Gebruikersnaam</TableHead>
+              <TableHead>Naam</TableHead>
+              <TableHead>Rol</TableHead>
               <TableHead>Groep</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Acties</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -270,13 +270,13 @@ const UserManagement = () => {
                 <TableCell>{user.name}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
-                    {user.role}
+                    {user.role === 'student' ? 'cursist' : user.role === 'teacher' ? 'instructeur' : 'admin'}
                   </span>
                 </TableCell>
                 <TableCell>
                   {user.role === 'student' && (
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getGroupBadgeColor(user.groep || GROUPS.NONE)}`}>
-                      {user.groep || 'None'}
+                      {user.groep || 'Geen'}
                     </span>
                   )}
                 </TableCell>
@@ -300,16 +300,16 @@ const UserManagement = () => {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>Gebruiker bewerken</DialogTitle>
             <DialogDescription>
-              Update user information. Leave password blank to keep current password.
+              Werkt de gebruikersinformatie bij. Laat wachtwoord leeg om het huidige te behouden.
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-username" className="text-right">
-                Username
+                Gebruikersnaam
               </Label>
               <Input
                 id="edit-username"
@@ -321,7 +321,7 @@ const UserManagement = () => {
             
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-name" className="text-right">
-                Name
+                Naam
               </Label>
               <Input
                 id="edit-name"
@@ -333,32 +333,32 @@ const UserManagement = () => {
             
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-password" className="text-right">
-                Password
+                Wachtwoord
               </Label>
               <Input
                 id="edit-password"
                 type="password"
                 value={editUser.password}
                 onChange={(e) => setEditUser({...editUser, password: e.target.value})}
-                placeholder="Leave blank to keep current password"
+                placeholder="Laat leeg om het huidige te behouden"
                 className="col-span-3"
               />
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="edit-role" className="text-right">
-                Role
+                Rol
               </Label>
               <Select 
                 value={editUser.role} 
                 onValueChange={(value: 'student' | 'teacher' | 'admin') => setEditUser({...editUser, role: value})}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder="Selecteer rol" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="student">Cursist</SelectItem>
+                  <SelectItem value="teacher">Instructeur</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -374,12 +374,12 @@ const UserManagement = () => {
                   onValueChange={(value: string) => setEditUser({...editUser, groep: value})}
                 >
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select groep" />
+                    <SelectValue placeholder="Selecteer groep" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={GROUPS.DIZA}>Diza</SelectItem>
                     <SelectItem value={GROUPS.DOZO}>Dozo</SelectItem>
-                    <SelectItem value={GROUPS.NONE}>None</SelectItem>
+                    <SelectItem value={GROUPS.NONE}>Geen</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -387,8 +387,8 @@ const UserManagement = () => {
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleEditUser}>Update User</Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Annuleren</Button>
+            <Button onClick={handleEditUser}>Gebruiker bijwerken</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -397,15 +397,15 @@ const UserManagement = () => {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle>Bevestig verwijderen</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone.
+              Weet je zeker dat je deze gebruiker wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.
             </DialogDescription>
           </DialogHeader>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteUser}>Delete User</Button>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Annuleren</Button>
+            <Button variant="destructive" onClick={handleDeleteUser}>Gebruiker verwijderen</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

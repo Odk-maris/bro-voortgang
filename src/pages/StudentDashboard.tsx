@@ -44,9 +44,9 @@ const StudentDashboard = () => {
     const counts = { 1: 0, 2: 0, 3: 0 };
     grades.forEach(grade => counts[grade.grade as keyof typeof counts]++);
     return [
-      { name: 'Needs Improvement', value: counts[1], color: '#FECACA' },
-      { name: 'Satisfactory', value: counts[2], color: '#FDE68A' },
-      { name: 'Excellent', value: counts[3], color: '#A7F3D0' },
+      { name: 'Verbetering nodig', value: counts[1], color: '#FECACA' },
+      { name: 'Voldoende', value: counts[2], color: '#FDE68A' },
+      { name: 'Uitstekend', value: counts[3], color: '#A7F3D0' },
     ];
   };
 
@@ -64,35 +64,35 @@ const StudentDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Overall Progress</CardTitle>
+              <CardTitle className="text-base font-medium">Totale Voortgang</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="text-3xl font-semibold mb-1">
                 {studentGrades.length}
               </div>
               <p className="text-sm text-muted-foreground">
-                Total grades recorded
+                Totaal beoordelingen
               </p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Test Completions</CardTitle>
+              <CardTitle className="text-base font-medium">Bruggen gedaan</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="text-3xl font-semibold mb-1">
                 {totalTestCompletions}
               </div>
               <p className="text-sm text-muted-foreground">
-                Total tests completed
+                Totaal bruggen gedaan
               </p>
             </CardContent>
           </Card>
           
           <GradeChart 
             grades={gradeDistribution} 
-            title="Grade Distribution" 
+            title="Beoordeling Verdeling" 
           />
         </div>
         
@@ -113,7 +113,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={verrichtingenFeedback.feedback} 
                     date={verrichtingenFeedback.date} 
-                    teacherName={verrichtingenFeedback.teacherId ? getUserById(verrichtingenFeedback.teacherId)?.name || 'Teacher' : 'Teacher'} 
+                    teacherName={verrichtingenFeedback.teacherId ? getUserById(verrichtingenFeedback.teacherId)?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -140,7 +140,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={roeitechniekFeedback.feedback} 
                     date={roeitechniekFeedback.date} 
-                    teacherName={roeitechniekFeedback.teacherId ? getUserById(roeitechniekFeedback.teacherId)?.name || 'Teacher' : 'Teacher'} 
+                    teacherName={roeitechniekFeedback.teacherId ? getUserById(roeitechniekFeedback.teacherId)?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -167,7 +167,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={stuurkunstFeedback.feedback} 
                     date={stuurkunstFeedback.date} 
-                    teacherName={stuurkunstFeedback.teacherId ? getUserById(stuurkunstFeedback.teacherId)?.name || 'Teacher' : 'Teacher'} 
+                    teacherName={stuurkunstFeedback.teacherId ? getUserById(stuurkunstFeedback.teacherId)?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -186,7 +186,7 @@ const StudentDashboard = () => {
         </Tabs>
         
         <div className="mt-6">
-          <h2 className="text-lg font-medium mb-4">Test Completions</h2>
+          <h2 className="text-lg font-medium mb-4">Bruggen gedaan</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tests.map((test) => {
               const completionCount = getTestCount(test.id);
@@ -203,16 +203,16 @@ const StudentDashboard = () => {
                         <p className="font-medium">{test.name}</p>
                         <p className="text-sm text-muted-foreground">
                           {completionCount > 0 ? (
-                            <span>Completed {completionCount} time{completionCount !== 1 ? 's' : ''}</span>
+                            <span>{completionCount} keer gedaan</span>
                           ) : (
-                            <span>Not yet completed</span>
+                            <span>Nog niet gedaan</span>
                           )}
                         </p>
                       </div>
                     </div>
                     {completionCount > 0 && (
                       <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                        {completionCount} {completionCount === 1 ? 'time' : 'times'}
+                        {completionCount} {completionCount === 1 ? 'keer' : 'keer'}
                       </Badge>
                     )}
                   </CardContent>

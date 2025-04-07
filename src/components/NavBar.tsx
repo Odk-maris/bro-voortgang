@@ -17,11 +17,11 @@ const NavBar = () => {
 
   const navItems = [
     ...(user.role === 'student' ? [
-      { path: '/student', label: 'Dashboard', icon: <LucideClipboardList className="mr-2 h-4 w-4" /> },
+      { path: '/student', label: 'Voortgangsmeter', icon: <LucideClipboardList className="mr-2 h-4 w-4" /> },
     ] : []),
     ...(user.role === 'teacher' || user.role === 'admin' ? [
-      { path: '/teacher', label: 'Grading', icon: <LucideClipboardList className="mr-2 h-4 w-4" /> },
-      { path: '/teacher/history', label: 'History', icon: <LucideBook className="mr-2 h-4 w-4" /> },
+      { path: '/teacher', label: 'Beoordelen', icon: <LucideClipboardList className="mr-2 h-4 w-4" /> },
+      { path: '/teacher/history', label: 'Geschiedenis', icon: <LucideBook className="mr-2 h-4 w-4" /> },
     ] : []),
     ...(user.role === 'admin' ? [
       { path: '/admin', label: 'Admin', icon: <LucideSettings className="mr-2 h-4 w-4" /> },
@@ -38,7 +38,7 @@ const NavBar = () => {
             transition={{ duration: 0.4 }}
             className="text-lg font-medium flex items-center"
           >
-            Student Dashboard
+            Voortgangsmeter
           </motion.div>
           
           <nav className="hidden md:flex items-center gap-1">
@@ -80,7 +80,7 @@ const NavBar = () => {
           
           <span className="text-sm font-medium hidden sm:inline-block">
             <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground">Welcome,</span>
+              <span className="text-muted-foreground">Welkom,</span>
               <span>{user.name}</span>
               <LucideUser className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
@@ -88,7 +88,7 @@ const NavBar = () => {
           
           <Button onClick={logout} variant="ghost" size="sm" className="gap-1.5">
             <LucideLogOut className="h-4 w-4" />
-            <span className="hidden sm:inline-block">Log out</span>
+            <span className="hidden sm:inline-block">Uitloggen</span>
           </Button>
         </div>
       </div>

@@ -74,7 +74,7 @@ const TeacherHistory = () => {
   // Get teacher names for feedback display
   const getTeacherName = (teacherId: number) => {
     const teacher = getUserById(teacherId);
-    return teacher ? teacher.name : 'Unknown Teacher';
+    return teacher ? teacher.name : 'Onbekende instructeur';
   };
 
   // Count test completions
@@ -86,15 +86,15 @@ const TeacherHistory = () => {
   return (
     <DashboardLayout allowedRoles={['teacher', 'admin']}>
       <div className="container py-6">
-        <h1 className="text-2xl font-semibold mb-6">Student History</h1>
+        <h1 className="text-2xl font-semibold mb-6">Cursist Geschiedenis</h1>
         
         <div className="mb-6">
           <Label htmlFor="student-select" className="block mb-2">
-            Select Student
+            Kies Cursist
           </Label>
           <Select value={selectedStudentId} onValueChange={handleStudentChange}>
             <SelectTrigger id="student-select" className="w-full md:w-80">
-              <SelectValue placeholder="Select a student" />
+              <SelectValue placeholder="Kies cursist" />
             </SelectTrigger>
             <SelectContent>
               {students.map((student) => (
@@ -116,7 +116,7 @@ const TeacherHistory = () => {
               <div className="lg:col-span-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Grade & Feedback History</CardTitle>
+                    <CardTitle>Beoordelingen & Feedback Geschiedenis</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -142,7 +142,7 @@ const TeacherHistory = () => {
                             {/* Category Feedback Section */}
                             {verrichtingenFeedback.length > 0 && (
                               <div className="border rounded-lg p-4 mb-6">
-                                <h3 className="font-medium mb-3">Category Feedback</h3>
+                                <h3 className="font-medium mb-3">Feedback</h3>
                                 <div className="space-y-4">
                                   {verrichtingenFeedback.map((feedback) => (
                                     <div key={feedback.id} className="border-t pt-3">
@@ -172,7 +172,7 @@ const TeacherHistory = () => {
                                       </Badge>
                                     </div>
                                     <Badge variant="outline" className="text-sm">
-                                      {subjectGrades.length} grade{subjectGrades.length !== 1 ? 's' : ''}
+                                      {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
                                     </Badge>
                                   </div>
                                   
@@ -188,7 +188,7 @@ const TeacherHistory = () => {
                                                 ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
                                               `}
                                             >
-                                              Grade: {grade.grade}
+                                              Beoordeling: {grade.grade}
                                             </Badge>
                                             <span className="text-sm text-muted-foreground">
                                               {new Date(grade.date).toLocaleDateString()}
@@ -219,7 +219,7 @@ const TeacherHistory = () => {
                             {/* Category Feedback Section */}
                             {roeitechniekFeedback.length > 0 && (
                               <div className="border rounded-lg p-4 mb-6">
-                                <h3 className="font-medium mb-3">Category Feedback</h3>
+                                <h3 className="font-medium mb-3">Feedback</h3>
                                 <div className="space-y-4">
                                   {roeitechniekFeedback.map((feedback) => (
                                     <div key={feedback.id} className="border-t pt-3">
@@ -249,7 +249,7 @@ const TeacherHistory = () => {
                                       </Badge>
                                     </div>
                                     <Badge variant="outline" className="text-sm">
-                                      {subjectGrades.length} grade{subjectGrades.length !== 1 ? 's' : ''}
+                                      {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
                                     </Badge>
                                   </div>
                                   
@@ -265,7 +265,7 @@ const TeacherHistory = () => {
                                                 ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
                                               `}
                                             >
-                                              Grade: {grade.grade}
+                                              Beoordeling: {grade.grade}
                                             </Badge>
                                             <span className="text-sm text-muted-foreground">
                                               {new Date(grade.date).toLocaleDateString()}
@@ -296,7 +296,7 @@ const TeacherHistory = () => {
                             {/* Category Feedback Section */}
                             {stuurkunstFeedback.length > 0 && (
                               <div className="border rounded-lg p-4 mb-6">
-                                <h3 className="font-medium mb-3">Category Feedback</h3>
+                                <h3 className="font-medium mb-3">Feedback</h3>
                                 <div className="space-y-4">
                                   {stuurkunstFeedback.map((feedback) => (
                                     <div key={feedback.id} className="border-t pt-3">
@@ -326,7 +326,7 @@ const TeacherHistory = () => {
                                       </Badge>
                                     </div>
                                     <Badge variant="outline" className="text-sm">
-                                      {subjectGrades.length} grade{subjectGrades.length !== 1 ? 's' : ''}
+                                      {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
                                     </Badge>
                                   </div>
                                   
@@ -342,7 +342,7 @@ const TeacherHistory = () => {
                                                 ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
                                               `}
                                             >
-                                              Grade: {grade.grade}
+                                              Beoordeling: {grade.grade}
                                             </Badge>
                                             <span className="text-sm text-muted-foreground">
                                               {new Date(grade.date).toLocaleDateString()}
@@ -366,7 +366,7 @@ const TeacherHistory = () => {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Test Completions</CardTitle>
+                    <CardTitle>Bruggen gedaan</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -378,8 +378,8 @@ const TeacherHistory = () => {
                               <p className="font-medium">{test.name}</p>
                               <p className="text-sm text-muted-foreground">
                                 {completionCount > 0 
-                                  ? `Completed ${completionCount} time${completionCount !== 1 ? 's' : ''}` 
-                                  : 'Not completed'}
+                                  ? `${completionCount} keer gedaan` 
+                                  : 'Nog niet gedaan'}
                               </p>
                             </div>
                             
@@ -389,7 +389,7 @@ const TeacherHistory = () => {
                                 ${completionCount > 0 ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}
                               `}
                             >
-                              {completionCount > 0 ? `${completionCount} ${completionCount === 1 ? 'time' : 'times'}` : 'Pending'}
+                              {completionCount > 0 ? `${completionCount} keer` : 'Nog niet'}
                             </Badge>
                           </div>
                         );
