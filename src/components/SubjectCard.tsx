@@ -54,13 +54,13 @@ const SubjectCard = ({ studentId, subjectId }: SubjectCardProps) => {
   const getGradeLabel = (grade: number) => {
     switch(grade) {
       case 1:
-        return 'Needs Improvement';
+        return 'Moet verbeteren';
       case 2:
-        return 'Satisfactory';
+        return 'Voldoende';
       case 3:
-        return 'Excellent';
+        return 'Uitstekend';
       default:
-        return 'Not Graded';
+        return 'Niet beoordeeld';
     }
   };
   
@@ -91,7 +91,7 @@ const SubjectCard = ({ studentId, subjectId }: SubjectCardProps) => {
               </Badge>
             ) : (
               <Badge variant="outline" className="text-xs bg-gray-100 text-gray-500 border-gray-200">
-                No grades
+                Geen beoordeling
               </Badge>
             )}
           </div>
@@ -101,7 +101,7 @@ const SubjectCard = ({ studentId, subjectId }: SubjectCardProps) => {
           <CardContent className="pb-4 pt-0 px-4">
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium mb-2">Recent Grades</h4>
+                <h4 className="text-sm font-medium mb-2">Recente beoordelingen</h4>
                 <div className="grid grid-cols-3 gap-2">
                   {latestGrades.length > 0 ? (
                     latestGrades.map((grade, index) => (
@@ -116,7 +116,7 @@ const SubjectCard = ({ studentId, subjectId }: SubjectCardProps) => {
                     ))
                   ) : (
                     <div className="col-span-3 text-sm text-muted-foreground">
-                      No grades recorded yet
+                      Nog geen beoordelingen
                     </div>
                   )}
                 </div>
@@ -124,16 +124,16 @@ const SubjectCard = ({ studentId, subjectId }: SubjectCardProps) => {
               
               {latestGrades.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium mb-2">Latest Feedback</h4>
+                  <h4 className="text-sm font-medium mb-2">Laatste feedback</h4>
                   <FeedbackItem feedback={latestGrades[0].feedback} date={latestGrades[0].date} />
                 </div>
               )}
               
               <div>
-                <h4 className="text-sm font-medium mb-2">Overall Progress</h4>
+                <h4 className="text-sm font-medium mb-2">Algemene voortgang</h4>
                 <TestProgressBar 
                   value={Math.round((averageGrade / 3) * 100)} 
-                  label={averageGrade > 0 ? getGradeLabel(Math.round(averageGrade)) : 'Not Graded'} 
+                  label={averageGrade > 0 ? getGradeLabel(Math.round(averageGrade)) : 'Niet beoordeeld'} 
                 />
               </div>
             </div>
