@@ -1,4 +1,3 @@
-
 // Mock data for the application
 // In a real app, this would be fetched from a database
 
@@ -60,16 +59,16 @@ export const subjects = [
 
 // Tests
 export const tests = [
-  { id: 1, name: 'Theorie Basistest', description: 'Basiskennis over roeitechniek en -termen' },
-  { id: 2, name: 'Praktijk Basistest', description: 'Basistechnieken in praktijk' },
-  { id: 3, name: 'Theorie Scullen', description: 'Theoretische kennis over scullen' },
-  { id: 4, name: 'Praktijk Scullen', description: 'Praktische vaardigheden scullen' },
-  { id: 5, name: 'Theorie Boordroeien', description: 'Theoretische kennis over boordroeien' },
-  { id: 6, name: 'Praktijk Boordroeien', description: 'Praktische vaardigheden boordroeien' },
-  { id: 7, name: 'Theorie Sturen', description: 'Theoretische kennis over sturen' },
-  { id: 8, name: 'Praktijk Sturen', description: 'Praktische vaardigheden sturen' },
-  { id: 9, name: 'Theorie Gevorderd', description: 'Gevorderde theoretische kennis' },
-  { id: 10, name: 'Praktijk Gevorderd', description: 'Gevorderde praktische vaardigheden' },
+  { id: 1, name: 'Zoetendijk(Ree) W>O', description: 'Basiskennis over roeitechniek en -termen' },
+  { id: 2, name: 'Zoetendijk(Ree) O>W', description: 'Basistechnieken in praktijk' },
+  { id: 3, name: 'Antonio Z>N', description: 'Theoretische kennis over scullen' },
+  { id: 4, name: 'Antonio N>Z', description: 'Praktische vaardigheden scullen' },
+  { id: 5, name: 'Nieuwenbroeksedijk Z>N', description: 'Theoretische kennis over boordroeien' },
+  { id: 6, name: 'Nieuwenbroeksedijk N>Z', description: 'Praktische vaardigheden boordroeien' },
+  { id: 7, name: 'Korssendijk O>W', description: 'Theoretische kennis over sturen' },
+  { id: 8, name: 'Korssendijk W>O', description: 'Praktische vaardigheden sturen' },
+  { id: 9, name: 'Brienenoord Z>N', description: 'Gevorderde theoretische kennis' },
+  { id: 10, name: 'Brienenoord N>Z', description: 'Gevorderde praktische vaardigheden' },
 ];
 
 // Users
@@ -423,4 +422,3 @@ export const deleteUser = (id: number) => {
   }
   return null;
 };
-
