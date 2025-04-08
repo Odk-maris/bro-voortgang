@@ -1,3 +1,4 @@
+
 import { supabase, User, GroupEnum, CategoryEnum, RoleEnum } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -179,7 +180,8 @@ export const getStudentsByRole = async (role: RoleEnum = 'student') => {
 // Add a new grade
 export const addGrade = async (studentId: string | number, subjectId: number, grade: number, teacherId: string | number, feedback: string = '') => {
   try {
-    const { error } = await supabase
+    console.log('Adding grade:', { studentId, subjectId, grade, teacherId, feedback });
+    const { error, data } = await supabase
       .from('grades')
       .insert({
         student_id: convertIdToString(studentId),
@@ -189,7 +191,12 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
         feedback: feedback || null
       });
       
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error adding grade:', error);
+      throw error;
+    }
+    
+    console.log('Grade added successfully:', data);
     return true;
   } catch (error) {
     console.error('Error adding grade:', error);
@@ -201,7 +208,8 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
 // Add test completion
 export const addTestCompletion = async (studentId: string | number, testId: number, completed: boolean = true) => {
   try {
-    const { error } = await supabase
+    console.log('Adding test completion:', { studentId, testId, completed });
+    const { error, data } = await supabase
       .from('test_completions')
       .insert({
         student_id: convertIdToString(studentId),
@@ -209,7 +217,12 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
         completed: completed
       });
       
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error adding test completion:', error);
+      throw error;
+    }
+    
+    console.log('Test completion added successfully:', data);
     return true;
   } catch (error) {
     console.error('Error adding test completion:', error);
@@ -221,16 +234,22 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
 // Add category feedback
 export const addCategoryFeedback = async (studentId: string | number, category: CategoryEnum, feedback: string, teacherId: string | number) => {
   try {
-    const { error } = await supabase
+    console.log('Adding category feedback:', { studentId, category, feedback, teacherId });
+    const { error, data } = await supabase
       .from('category_feedback')
       .insert({
         student_id: convertIdToString(studentId),
-        category: category as CategoryEnum,
+        category: category,
         feedback: feedback,
         teacher_id: convertIdToString(teacherId)
       });
       
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error adding category feedback:', error);
+      throw error;
+    }
+    
+    console.log('Category feedback added successfully:', data);
     return true;
   } catch (error) {
     console.error('Error adding category feedback:', error);

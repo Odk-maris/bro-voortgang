@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -22,66 +22,139 @@ import {
   getUserById,
   getStudentCategoryFeedback,
   getStudentTestCompletionCount,
+  getAllTests,
   CATEGORIES,
-  tests,
-} from '@/utils/mockData';
+} from '@/utils/supabaseData';
 import FeedbackItem from '@/components/FeedbackItem';
 
 const TeacherHistory = () => {
   const { user } = useAuth();
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [activeTab, setActiveTab] = useState(CATEGORIES.VERRICHTINGEN);
+  
+  const [students, setStudents] = useState<any[]>([]);
+  const [studentGrades, setStudentGrades] = useState<any[]>([]);
+  const [studentTests, setStudentTests] = useState<any[]>([]);
+  const [tests, setTests] = useState<any[]>([]);
+  const [verrichtingenSubjects, setVerrichtingenSubjects] = useState<any[]>([]);
+  const [roeitechniekSubjects, setRoeitechniekSubjects] = useState<any[]>([]);
+  const [stuurkunstSubjects, setStuurkunstSubjects] = useState<any[]>([]);
+  const [verrichtingenFeedback, setVerrichtingenFeedback] = useState<any[]>([]);
+  const [roeitechniekFeedback, setRoeitechniekFeedback] = useState<any[]>([]);
+  const [stuurkunstFeedback, setStuurkunstFeedback] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [teacherCache, setTeacherCache] = useState<Record<string, any>>({});
 
-  const students = getStudentsByRole();
+  // Load initial data
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setLoading(true);
+      try {
+        const fetchedStudents = await getStudentsByRole('student');
+        setStudents(fetchedStudents);
+        
+        const fetchedVerrichtingenSubjects = await getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
+        setVerrichtingenSubjects(fetchedVerrichtingenSubjects.filter(subject => subject.active));
+        
+        const fetchedRoeitechniekSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
+        setRoeitechniekSubjects(fetchedRoeitechniekSubjects.filter(subject => subject.active));
+        
+        const fetchedStuurkunstSubjects = await getSubjectsByCategory(CATEGORIES.STUURKUNST);
+        setStuurkunstSubjects(fetchedStuurkunstSubjects.filter(subject => subject.active));
+        
+        const allTests = await getAllTests();
+        setTests(allTests);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadInitialData();
+  }, []);
+  
+  // Load student-specific data when a student is selected
+  useEffect(() => {
+    if (!selectedStudentId) return;
+    
+    const loadStudentData = async () => {
+      setLoading(true);
+      try {
+        const grades = await getStudentGrades(selectedStudentId);
+        setStudentGrades(grades);
+        
+        const tests = await getStudentTests(selectedStudentId);
+        setStudentTests(tests);
+        
+        const vFeedback = await getStudentCategoryFeedback(selectedStudentId, CATEGORIES.VERRICHTINGEN);
+        setVerrichtingenFeedback(vFeedback);
+        
+        const rFeedback = await getStudentCategoryFeedback(selectedStudentId, CATEGORIES.ROEITECHNIEK);
+        setRoeitechniekFeedback(rFeedback);
+        
+        const sFeedback = await getStudentCategoryFeedback(selectedStudentId, CATEGORIES.STUURKUNST);
+        setStuurkunstFeedback(sFeedback);
+      } catch (error) {
+        console.error('Error loading student data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadStudentData();
+  }, [selectedStudentId]);
   
   const handleStudentChange = (value: string) => {
     setSelectedStudentId(value);
   };
 
-  // Get student grades, tests, and feedback if a student is selected
-  const studentGrades = selectedStudentId
-    ? getStudentGrades(parseInt(selectedStudentId))
-    : [];
-  
-  const studentTests = selectedStudentId
-    ? getStudentTests(parseInt(selectedStudentId))
-    : [];
-  
-  const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN).filter(subject => subject.active);
-  const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK).filter(subject => subject.active);
-  const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST).filter(subject => subject.active);
-  
-  // Get category feedback
-  const verrichtingenFeedback = selectedStudentId 
-    ? getStudentCategoryFeedback(parseInt(selectedStudentId), CATEGORIES.VERRICHTINGEN)
-    : [];
-  
-  const roeitechniekFeedback = selectedStudentId 
-    ? getStudentCategoryFeedback(parseInt(selectedStudentId), CATEGORIES.ROEITECHNIEK)
-    : [];
-  
-  const stuurkunstFeedback = selectedStudentId 
-    ? getStudentCategoryFeedback(parseInt(selectedStudentId), CATEGORIES.STUURKUNST)
-    : [];
-  
   // Function to get grades for a subject
   const getSubjectGrades = (subjectId: number) => {
     return studentGrades
-      .filter(grade => grade.subjectId === subjectId)
+      .filter(grade => grade.subject_id === subjectId)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
   // Get teacher names for feedback display
-  const getTeacherName = (teacherId: number) => {
-    const teacher = getUserById(teacherId);
-    return teacher ? teacher.name : 'Onbekende instructeur';
+  const getTeacherName = async (teacherId: string) => {
+    if (teacherCache[teacherId]) {
+      return teacherCache[teacherId].name;
+    }
+    
+    try {
+      const teacher = await getUserById(teacherId);
+      if (teacher) {
+        setTeacherCache(prev => ({
+          ...prev,
+          [teacherId]: teacher
+        }));
+        return teacher.name;
+      }
+    } catch (error) {
+      console.error('Error fetching teacher:', error);
+    }
+    
+    return 'Onbekende instructeur';
   };
 
   // Count test completions
-  const getTestCompletionCount = (testId: number) => {
+  const getTestCompletionCount = async (testId: number) => {
     if (!selectedStudentId) return 0;
-    return getStudentTestCompletionCount(parseInt(selectedStudentId), testId);
+    return await getStudentTestCompletionCount(selectedStudentId, testId);
   };
+
+  if (loading && !selectedStudentId) {
+    return (
+      <DashboardLayout allowedRoles={['teacher', 'admin']}>
+        <div className="container py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="h-8 w-8 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout allowedRoles={['teacher', 'admin']}>
@@ -98,7 +171,7 @@ const TeacherHistory = () => {
             </SelectTrigger>
             <SelectContent>
               {students.map((student) => (
-                <SelectItem key={student.id} value={student.id.toString()}>
+                <SelectItem key={student.id} value={student.id}>
                   {student.name}
                 </SelectItem>
               ))}
@@ -119,7 +192,7 @@ const TeacherHistory = () => {
                     <CardTitle>Beoordelingen & Feedback Geschiedenis</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="space-y-4">
                       <TabsList className="grid grid-cols-3">
                         <TabsTrigger value={CATEGORIES.VERRICHTINGEN}>Verrichtingen</TabsTrigger>
                         <TabsTrigger value={CATEGORIES.ROEITECHNIEK}>Roeitechniek</TabsTrigger>
@@ -149,7 +222,7 @@ const TeacherHistory = () => {
                                       <FeedbackItem 
                                         feedback={feedback.feedback} 
                                         date={feedback.date} 
-                                        teacherName={getTeacherName(feedback.teacherId)} 
+                                        teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'}
                                       />
                                     </div>
                                   ))}
@@ -226,7 +299,7 @@ const TeacherHistory = () => {
                                       <FeedbackItem 
                                         feedback={feedback.feedback} 
                                         date={feedback.date} 
-                                        teacherName={getTeacherName(feedback.teacherId)} 
+                                        teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'} 
                                       />
                                     </div>
                                   ))}
@@ -303,7 +376,7 @@ const TeacherHistory = () => {
                                       <FeedbackItem 
                                         feedback={feedback.feedback} 
                                         date={feedback.date} 
-                                        teacherName={getTeacherName(feedback.teacherId)} 
+                                        teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'} 
                                       />
                                     </div>
                                   ))}
@@ -371,7 +444,20 @@ const TeacherHistory = () => {
                   <CardContent>
                     <div className="space-y-4">
                       {tests.map((test) => {
-                        const completionCount = getTestCompletionCount(test.id);
+                        // Using state instead of calling the async function directly
+                        const [completionCount, setCompletionCount] = useState(0);
+                        
+                        // Fetch completion count when student ID changes
+                        useEffect(() => {
+                          if (selectedStudentId) {
+                            const fetchCount = async () => {
+                              const count = await getTestCompletionCount(test.id);
+                              setCompletionCount(count);
+                            };
+                            fetchCount();
+                          }
+                        }, [selectedStudentId, test.id]);
+                        
                         return (
                           <div key={test.id} className="flex items-center justify-between border rounded-lg p-3">
                             <div>
