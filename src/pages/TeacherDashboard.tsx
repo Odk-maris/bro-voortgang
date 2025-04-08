@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -53,16 +52,13 @@ const TeacherDashboard = () => {
   const [tests, setTests] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
-  // Load students and subjects
   useEffect(() => {
     const loadData = async () => {
       setDataLoading(true);
       try {
-        // Get all students
         const fetchedStudents = await getStudentsByRole('student');
         setStudents(fetchedStudents);
 
-        // Get all subjects by category
         const verrichtingenSubjects = await getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
         const roeitechniekSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
         const stuurkunstSubjects = await getSubjectsByCategory(CATEGORIES.STUURKUNST);
@@ -73,7 +69,6 @@ const TeacherDashboard = () => {
           [CATEGORIES.STUURKUNST]: stuurkunstSubjects.filter(subject => subject.active)
         });
 
-        // Get all tests
         const allTests = await getAllTests();
         setTests(allTests);
       } catch (error) {
@@ -92,11 +87,9 @@ const TeacherDashboard = () => {
       const loadSelectedStudentData = async () => {
         setLoading(true);
         try {
-          // Get student details
           const student = await getUserById(selectedStudentId);
           setSelectedStudent(student);
 
-          // Get test completion counts
           const counts: Record<number, number> = {};
           for (const test of tests) {
             const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
@@ -104,14 +97,12 @@ const TeacherDashboard = () => {
           }
           setTestCompletionCounts(counts);
           
-          // Initialize test selections
           const initialTestState: Record<number, boolean> = {};
           tests.forEach(test => {
             initialTestState[test.id] = false;
           });
           setSelectedTests(initialTestState);
           
-          // Initialize feedback fields
           setCategoryFeedback({
             [CATEGORIES.VERRICHTINGEN]: '',
             [CATEGORIES.ROEITECHNIEK]: '',
@@ -141,7 +132,7 @@ const TeacherDashboard = () => {
     }));
   };
 
-  const handleCategoryFeedbackChange = (category: string, value: string) => {
+  const handleCategoryFeedbackChange = (category: CategoryEnum, value: string) => {
     setCategoryFeedback(prev => ({
       ...prev,
       [category]: value
@@ -169,20 +160,17 @@ const TeacherDashboard = () => {
     setLoading(true);
     
     try {
-      // Save grades
       const gradePromises = Object.entries(selectedGrades).map(([subjectId, grade]) => {
         return addGrade(selectedStudentId, parseInt(subjectId), grade, user.id, '');
       });
       
-      // Save feedback
       const feedbackPromises = Object.entries(categoryFeedback).map(([category, feedback]) => {
         if (feedback.trim()) {
-          return addCategoryFeedback(selectedStudentId, category, feedback, user.id);
+          return addCategoryFeedback(selectedStudentId, category as CategoryEnum, feedback, user.id);
         }
         return Promise.resolve(true);
       });
       
-      // Save test completions
       const testPromises = Object.entries(selectedTests).map(([testId, isCompleted]) => {
         if (isCompleted) {
           return addTestCompletion(selectedStudentId, parseInt(testId), true);
@@ -204,7 +192,6 @@ const TeacherDashboard = () => {
       });
       setSelectedTests(resetTests);
       
-      // Refresh test completion counts
       if (selectedStudentId) {
         const counts: Record<number, number> = {};
         for (const test of tests) {

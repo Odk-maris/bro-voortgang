@@ -225,7 +225,7 @@ export const addCategoryFeedback = async (studentId: string | number, category: 
       .from('category_feedback')
       .insert({
         student_id: convertIdToString(studentId),
-        category: category,
+        category: category as CategoryEnum,
         feedback: feedback,
         teacher_id: convertIdToString(teacherId)
       });
@@ -259,7 +259,7 @@ export const getStudentLatestGrades = async (studentId: string | number, subject
 };
 
 // Get student category feedback
-export const getStudentCategoryFeedback = async (studentId: string | number, category: CategoryEnum | string) => {
+export const getStudentCategoryFeedback = async (studentId: string | number, category: CategoryEnum) => {
   try {
     const { data, error } = await supabase
       .from('category_feedback')
