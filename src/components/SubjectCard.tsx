@@ -13,18 +13,39 @@ import TestProgressBar from './TestProgressBar';
 import FeedbackItem from './FeedbackItem';
 
 interface SubjectCardProps {
-  studentId: number | string;  // Accept either number or string student ID
+  studentId: number | string;
   subjectId: number;
 }
 
 const SubjectCard = ({ studentId, subjectId }: SubjectCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [subject, setSubject] = useState<any>(null);
+  const [latestGrades, setLatestGrades] = useState<any[]>([]);
+  const [averageGrade, setAverageGrade] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
   
-  const subject = getSubjectById(subjectId);
-  const latestGrades = getStudentLatestGrades(studentId, subjectId);
-  const averageGrade = getStudentAverageGrade(studentId, subjectId);
+  useEffect(() => {
+    const loadSubjectData = async () => {
+      setLoading(true);
+      try {
+        const subjectData = await getSubjectById(subjectId);
+        const grades = await getStudentLatestGrades(studentId, subjectId);
+        const avgGrade = await getStudentAverageGrade(studentId, subjectId);
+        
+        setSubject(subjectData);
+        setLatestGrades(grades);
+        setAverageGrade(avgGrade);
+      } catch (error) {
+        console.error("Error loading subject data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadSubjectData();
+  }, [studentId, subjectId]);
   
-  if (!subject) return null;
+  if (loading || !subject) return null;
   
   const getCategoryColor = (category: string) => {
     switch(category) {

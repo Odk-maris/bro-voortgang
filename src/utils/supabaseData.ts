@@ -1,4 +1,3 @@
-
 import { supabase, User, GroupEnum, CategoryEnum, RoleEnum } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -220,13 +219,13 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
 };
 
 // Add category feedback
-export const addCategoryFeedback = async (studentId: string | number, category: CategoryEnum | string, feedback: string, teacherId: string | number) => {
+export const addCategoryFeedback = async (studentId: string | number, category: CategoryEnum, feedback: string, teacherId: string | number) => {
   try {
     const { error } = await supabase
       .from('category_feedback')
       .insert({
         student_id: convertIdToString(studentId),
-        category: category as CategoryEnum,
+        category: category,
         feedback: feedback,
         teacher_id: convertIdToString(teacherId)
       });
@@ -315,5 +314,3 @@ export const CATEGORIES = {
   ROEITECHNIEK: 'roeitechniek' as CategoryEnum,
   STUURKUNST: 'stuurkunst' as CategoryEnum,
 };
-
-// Update AdminPanel.tsx to use the Supabase data functions

@@ -12,7 +12,7 @@ import {
   getStudentLatestCategoryFeedback,
   getUserById,
   CATEGORIES,
-  tests,
+  getAllTests,
   convertId,
   convertIdToString
 } from '@/utils/supabaseData';
@@ -33,6 +33,11 @@ const StudentDashboard = () => {
   const [stuurkunstFeedback, setStuurkunstFeedback] = useState<any>(null);
   const [testCompletionCounts, setTestCompletionCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
+  const [verrichtingenSubjects, setVerrichtingenSubjects] = useState<any[]>([]);
+  const [roeitechniekSubjects, setRoeitechniekSubjects] = useState<any[]>([]);
+  const [stuurkunstSubjects, setStuurkunstSubjects] = useState<any[]>([]);
+  const [allTests, setAllTests] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -41,12 +46,18 @@ const StudentDashboard = () => {
       setLoading(true);
 
       try {
+        // Load all tests first
+        const testsData = await getAllTests();
+        setAllTests(testsData);
+        
+        // Load grades and test completions
         const grades = await getStudentGrades(user.id);
         setStudentGrades(grades);
 
         const tests = await getStudentTests(user.id);
         setStudentTests(tests);
 
+        // Load category feedback
         const vFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.VERRICHTINGEN);
         setVerrichtingenFeedback(vFeedback);
 
@@ -56,13 +67,37 @@ const StudentDashboard = () => {
         const sFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.STUURKUNST);
         setStuurkunstFeedback(sFeedback);
 
+        // Load test completion counts
         const counts: Record<number, number> = {};
-        for (const test of tests) {
-          // Fix: Convert user.id string to number using convertId
-          const count = await getStudentTestCompletionCount(user.id, convertId(test.id));
+        for (const test of testsData) {
+          const count = await getStudentTestCompletionCount(user.id, test.id);
           counts[test.id] = count;
         }
         setTestCompletionCounts(counts);
+        
+        // Load subjects by category
+        const vSubjects = await getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
+        setVerrichtingenSubjects(vSubjects);
+        
+        const rSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
+        setRoeitechniekSubjects(rSubjects);
+        
+        const sSubjects = await getSubjectsByCategory(CATEGORIES.STUURKUNST);
+        setStuurkunstSubjects(sSubjects);
+        
+        // Load teacher details for feedback
+        const teacherIds = new Set<string>();
+        if (vFeedback?.teacher_id) teacherIds.add(vFeedback.teacher_id);
+        if (rFeedback?.teacher_id) teacherIds.add(rFeedback.teacher_id);
+        if (sFeedback?.teacher_id) teacherIds.add(sFeedback.teacher_id);
+        
+        const teacherDetails: Record<string, any> = {};
+        for (const teacherId of teacherIds) {
+          const teacher = await getUserById(teacherId);
+          if (teacher) teacherDetails[teacherId] = teacher;
+        }
+        setTeachers(teacherDetails);
+        
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       }
@@ -76,10 +111,6 @@ const StudentDashboard = () => {
   if (!user) return null;
 
   const studentId = user.id;
-  
-  const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
-  const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
-  const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST);
   
   const countGradesByValue = (grades: typeof studentGrades) => {
     const counts = { 1: 0, 2: 0, 3: 0 };
@@ -106,6 +137,10 @@ const StudentDashboard = () => {
       </DashboardLayout>
     );
   }
+  
+  const getTeacherName = (teacherId: string) => {
+    return teachers[teacherId]?.name || 'Instructeur';
+  };
   
   return (
     <DashboardLayout allowedRoles={['student']}>
@@ -165,8 +200,8 @@ const StudentDashboard = () => {
                 <CardContent>
                   <FeedbackItem 
                     feedback={verrichtingenFeedback.feedback} 
-                    date={verrichtingenFeedback.date} 
-                    teacherName={verrichtingenFeedback.teacher_id ? getUserById(convertId(verrichtingenFeedback.teacher_id))?.name || 'Instructeur' : 'Instructeur'} 
+                    date={verrichtingenFeedback.date}
+                    teacherName={getTeacherName(verrichtingenFeedback.teacher_id)}
                   />
                 </CardContent>
               </Card>
@@ -192,8 +227,8 @@ const StudentDashboard = () => {
                 <CardContent>
                   <FeedbackItem 
                     feedback={roeitechniekFeedback.feedback} 
-                    date={roeitechniekFeedback.date} 
-                    teacherName={roeitechniekFeedback.teacher_id ? getUserById(convertId(roeitechniekFeedback.teacher_id))?.name || 'Instructeur' : 'Instructeur'} 
+                    date={roeitechniekFeedback.date}
+                    teacherName={getTeacherName(roeitechniekFeedback.teacher_id)}
                   />
                 </CardContent>
               </Card>
@@ -219,8 +254,8 @@ const StudentDashboard = () => {
                 <CardContent>
                   <FeedbackItem 
                     feedback={stuurkunstFeedback.feedback} 
-                    date={stuurkunstFeedback.date} 
-                    teacherName={stuurkunstFeedback.teacher_id ? getUserById(convertId(stuurkunstFeedback.teacher_id))?.name || 'Instructeur' : 'Instructeur'} 
+                    date={stuurkunstFeedback.date}
+                    teacherName={getTeacherName(stuurkunstFeedback.teacher_id)}
                   />
                 </CardContent>
               </Card>
@@ -241,7 +276,7 @@ const StudentDashboard = () => {
         <div className="mt-6">
           <h2 className="text-lg font-medium mb-4">Bruggen gedaan</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {tests.map((test) => {
+            {allTests.map((test) => {
               const completionCount = testCompletionCounts[test.id] || 0;
               return (
                 <Card key={test.id} className={`transition-colors ${completionCount > 0 ? 'border-green-100 bg-green-50/50' : ''}`}>
