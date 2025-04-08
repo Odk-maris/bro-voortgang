@@ -36,6 +36,7 @@ const TeacherHistory = () => {
   const [studentGrades, setStudentGrades] = useState<any[]>([]);
   const [studentTests, setStudentTests] = useState<any[]>([]);
   const [tests, setTests] = useState<any[]>([]);
+  const [testCompletionCounts, setTestCompletionCounts] = useState<Record<number, number>>({});
   const [verrichtingenSubjects, setVerrichtingenSubjects] = useState<any[]>([]);
   const [roeitechniekSubjects, setRoeitechniekSubjects] = useState<any[]>([]);
   const [stuurkunstSubjects, setStuurkunstSubjects] = useState<any[]>([]);
@@ -95,6 +96,18 @@ const TeacherHistory = () => {
         
         const sFeedback = await getStudentCategoryFeedback(selectedStudentId, CATEGORIES.STUURKUNST);
         setStuurkunstFeedback(sFeedback);
+        
+        // Load test completion counts
+        const completionCounts: Record<number, number> = {};
+        if (tests.length > 0) {
+          await Promise.all(
+            tests.map(async (test) => {
+              const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
+              completionCounts[test.id] = count;
+            })
+          );
+          setTestCompletionCounts(completionCounts);
+        }
       } catch (error) {
         console.error('Error loading student data:', error);
       } finally {
@@ -136,12 +149,6 @@ const TeacherHistory = () => {
     }
     
     return 'Onbekende instructeur';
-  };
-
-  // Count test completions
-  const getTestCompletionCount = async (testId: number) => {
-    if (!selectedStudentId) return 0;
-    return await getStudentTestCompletionCount(selectedStudentId, testId);
   };
 
   if (loading && !selectedStudentId) {
@@ -443,43 +450,27 @@ const TeacherHistory = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {tests.map((test) => {
-                        // Using state instead of calling the async function directly
-                        const [completionCount, setCompletionCount] = useState(0);
-                        
-                        // Fetch completion count when student ID changes
-                        useEffect(() => {
-                          if (selectedStudentId) {
-                            const fetchCount = async () => {
-                              const count = await getTestCompletionCount(test.id);
-                              setCompletionCount(count);
-                            };
-                            fetchCount();
-                          }
-                        }, [selectedStudentId, test.id]);
-                        
-                        return (
-                          <div key={test.id} className="flex items-center justify-between border rounded-lg p-3">
-                            <div>
-                              <p className="font-medium">{test.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {completionCount > 0 
-                                  ? `${completionCount} keer gedaan` 
-                                  : 'Nog niet gedaan'}
-                              </p>
-                            </div>
-                            
-                            <Badge
-                              variant="outline"
-                              className={`
-                                ${completionCount > 0 ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}
-                              `}
-                            >
-                              {completionCount > 0 ? `${completionCount} keer` : 'Nog niet'}
-                            </Badge>
+                      {tests.map((test) => (
+                        <div key={test.id} className="flex items-center justify-between border rounded-lg p-3">
+                          <div>
+                            <p className="font-medium">{test.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {testCompletionCounts[test.id] > 0 
+                                ? `${testCompletionCounts[test.id]} keer gedaan` 
+                                : 'Nog niet gedaan'}
+                            </p>
                           </div>
-                        );
-                      })}
+                          
+                          <Badge
+                            variant="outline"
+                            className={`
+                              ${testCompletionCounts[test.id] > 0 ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}
+                            `}
+                          >
+                            {testCompletionCounts[test.id] > 0 ? `${testCompletionCounts[test.id]} keer` : 'Nog niet'}
+                          </Badge>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
