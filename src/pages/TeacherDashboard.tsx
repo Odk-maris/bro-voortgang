@@ -23,15 +23,11 @@ import {
   getStudentsByRole,
   getSubjectsByCategory,
   getUserById,
-  getStudentGrades,
-  getStudentLatestGrades,
   addGrade,
   addTestCompletion,
-  getStudentTests,
   getStudentTestCompletionCount,
-  tests,
+  getAllTests,
   CATEGORIES,
-  getStudentCategoryFeedback,
   addCategoryFeedback,
   convertId,
   convertIdToString,
@@ -45,39 +41,93 @@ const TeacherDashboard = () => {
   const [selectedGrades, setSelectedGrades] = useState<Record<number, number>>({});
   const [categoryFeedback, setCategoryFeedback] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState<Record<number, boolean>>({});
   const [testCompletionCounts, setTestCompletionCounts] = useState<Record<number, number>>({});
+  const [students, setStudents] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState({
+    [CATEGORIES.VERRICHTINGEN]: [],
+    [CATEGORIES.ROEITECHNIEK]: [],
+    [CATEGORIES.STUURKUNST]: []
+  });
+  const [tests, setTests] = useState<any[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
-  const students = getStudentsByRole();
+  // Load students and subjects
+  useEffect(() => {
+    const loadData = async () => {
+      setDataLoading(true);
+      try {
+        // Get all students
+        const fetchedStudents = await getStudentsByRole('student');
+        setStudents(fetchedStudents);
+
+        // Get all subjects by category
+        const verrichtingenSubjects = await getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
+        const roeitechniekSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
+        const stuurkunstSubjects = await getSubjectsByCategory(CATEGORIES.STUURKUNST);
+        
+        setSubjects({
+          [CATEGORIES.VERRICHTINGEN]: verrichtingenSubjects.filter(subject => subject.active),
+          [CATEGORIES.ROEITECHNIEK]: roeitechniekSubjects.filter(subject => subject.active),
+          [CATEGORIES.STUURKUNST]: stuurkunstSubjects.filter(subject => subject.active)
+        });
+
+        // Get all tests
+        const allTests = await getAllTests();
+        setTests(allTests);
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        toast.error('Failed to load data');
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   useEffect(() => {
     if (selectedStudentId) {
-      const loadTestCounts = async () => {
-        const counts: Record<number, number> = {};
-        for (const test of tests) {
-          const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
-          counts[test.id] = count;
+      const loadSelectedStudentData = async () => {
+        setLoading(true);
+        try {
+          // Get student details
+          const student = await getUserById(selectedStudentId);
+          setSelectedStudent(student);
+
+          // Get test completion counts
+          const counts: Record<number, number> = {};
+          for (const test of tests) {
+            const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
+            counts[test.id] = count;
+          }
+          setTestCompletionCounts(counts);
+          
+          // Initialize test selections
+          const initialTestState: Record<number, boolean> = {};
+          tests.forEach(test => {
+            initialTestState[test.id] = false;
+          });
+          setSelectedTests(initialTestState);
+          
+          // Initialize feedback fields
+          setCategoryFeedback({
+            [CATEGORIES.VERRICHTINGEN]: '',
+            [CATEGORIES.ROEITECHNIEK]: '',
+            [CATEGORIES.STUURKUNST]: ''
+          });
+        } catch (error) {
+          console.error('Error loading student data:', error);
+          toast.error('Failed to load student data');
+        } finally {
+          setLoading(false);
         }
-        setTestCompletionCounts(counts);
       };
       
-      const studentIdNum = convertId(selectedStudentId);
-      
-      const initialTestState: Record<number, boolean> = {};
-      tests.forEach(test => {
-        initialTestState[test.id] = false;
-      });
-      setSelectedTests(initialTestState);
-      
-      setCategoryFeedback({
-        [CATEGORIES.VERRICHTINGEN]: '',
-        [CATEGORIES.ROEITECHNIEK]: '',
-        [CATEGORIES.STUURKUNST]: ''
-      });
-      
-      loadTestCounts();
+      loadSelectedStudentData();
     }
-  }, [selectedStudentId]);
+  }, [selectedStudentId, tests]);
 
   const handleStudentChange = (value: string) => {
     setSelectedStudentId(value);
@@ -111,27 +161,36 @@ const TeacherDashboard = () => {
       return;
     }
 
-    const studentIdNum = convertId(selectedStudentId);
-    const teacherId = user?.id ? convertId(user.id) : 0;
+    if (!user?.id) {
+      toast.error('Teacher ID not found');
+      return;
+    }
     
     setLoading(true);
     
     try {
-      Object.entries(selectedGrades).forEach(([subjectId, grade]) => {
-        addGrade(studentIdNum, parseInt(subjectId), grade, teacherId, '');
+      // Save grades
+      const gradePromises = Object.entries(selectedGrades).map(([subjectId, grade]) => {
+        return addGrade(selectedStudentId, parseInt(subjectId), grade, user.id, '');
       });
       
-      Object.entries(categoryFeedback).forEach(([category, feedback]) => {
+      // Save feedback
+      const feedbackPromises = Object.entries(categoryFeedback).map(([category, feedback]) => {
         if (feedback.trim()) {
-          addCategoryFeedback(studentIdNum, category, feedback, teacherId);
+          return addCategoryFeedback(selectedStudentId, category, feedback, user.id);
         }
+        return Promise.resolve(true);
       });
       
-      Object.entries(selectedTests).forEach(([testId, isCompleted]) => {
+      // Save test completions
+      const testPromises = Object.entries(selectedTests).map(([testId, isCompleted]) => {
         if (isCompleted) {
-          addTestCompletion(studentIdNum, parseInt(testId), true);
+          return addTestCompletion(selectedStudentId, parseInt(testId), true);
         }
+        return Promise.resolve(true);
       });
+
+      await Promise.all([...gradePromises, ...feedbackPromises, ...testPromises]);
 
       toast.success('Succesvol opgeslagen', {
         description: 'De beoordelingen, feedback en bruggen zijn bijgewerkt.',
@@ -145,7 +204,18 @@ const TeacherDashboard = () => {
       });
       setSelectedTests(resetTests);
       
+      // Refresh test completion counts
+      if (selectedStudentId) {
+        const counts: Record<number, number> = {};
+        for (const test of tests) {
+          const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
+          counts[test.id] = count;
+        }
+        setTestCompletionCounts(counts);
+      }
+      
     } catch (error) {
+      console.error('Error saving data:', error);
       toast.error('Opslaan mislukt', {
         description: 'Er is een fout opgetreden bij het opslaan van de gegevens. Probeer het opnieuw.',
       });
@@ -154,11 +224,19 @@ const TeacherDashboard = () => {
     }
   };
 
-  const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN).filter(subject => subject.active);
-  const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK).filter(subject => subject.active);
-  const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST).filter(subject => subject.active);
+  const currentSubjects = subjects[activeTab] || [];
 
-  const selectedStudent = selectedStudentId ? getUserById(convertId(selectedStudentId)) : null;
+  if (dataLoading) {
+    return (
+      <DashboardLayout allowedRoles={['teacher', 'admin']}>
+        <div className="container py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="h-8 w-8 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout allowedRoles={['teacher', 'admin']}>
@@ -220,7 +298,7 @@ const TeacherDashboard = () => {
 
                       <AnimatePresence mode="wait">
                         <TabsContent 
-                          value={CATEGORIES.VERRICHTINGEN} 
+                          value={activeTab} 
                           className="space-y-4"
                           asChild
                         >
@@ -230,13 +308,20 @@ const TeacherDashboard = () => {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
                           >
-                            {verrichtingenSubjects.map((subject) => (
+                            {currentSubjects.map((subject) => (
                               <div key={subject.id} className="border rounded-lg p-4">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
                                   <div>
                                     <h3 className="font-medium">{subject.name}</h3>
                                     <div className="flex items-center gap-2 mt-1">
-                                      <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                                      <Badge 
+                                        variant="outline" 
+                                        className={activeTab === CATEGORIES.VERRICHTINGEN ? 
+                                          "bg-blue-100 text-blue-800 border-blue-200" : 
+                                          activeTab === CATEGORIES.ROEITECHNIEK ? 
+                                            "bg-green-100 text-green-800 border-green-200" : 
+                                            "bg-purple-100 text-purple-800 border-purple-200"}
+                                      >
                                         {subject.category}
                                       </Badge>
                                     </div>
@@ -267,129 +352,11 @@ const TeacherDashboard = () => {
                             ))}
                             
                             <div className="border rounded-lg p-4 mt-6">
-                              <h3 className="font-medium mb-2">Feedback voor Verrichtingen</h3>
+                              <h3 className="font-medium mb-2">Feedback voor {activeTab}</h3>
                               <Textarea
                                 placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
-                                value={categoryFeedback[CATEGORIES.VERRICHTINGEN] || ''}
-                                onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.VERRICHTINGEN, e.target.value)}
-                                className="resize-none h-32"
-                              />
-                            </div>
-                          </motion.div>
-                        </TabsContent>
-
-                        <TabsContent 
-                          value={CATEGORIES.ROEITECHNIEK} 
-                          className="space-y-4"
-                          asChild
-                        >
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            {roeitechniekSubjects.map((subject) => (
-                              <div key={subject.id} className="border rounded-lg p-4">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
-                                  <div>
-                                    <h3 className="font-medium">{subject.name}</h3>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-                                        {subject.category}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex-shrink-0">
-                                    <RadioGroup
-                                      value={selectedGrades[subject.id]?.toString() || ""}
-                                      onValueChange={(value) => handleGradeChange(subject.id, parseInt(value))}
-                                      className="flex items-center space-x-2"
-                                    >
-                                      <div className="flex items-center space-x-1">
-                                        <RadioGroupItem value="1" id={`grade-1-${subject.id}`} className="text-red-500" />
-                                        <Label htmlFor={`grade-1-${subject.id}`} className="text-sm">1</Label>
-                                      </div>
-                                      <div className="flex items-center space-x-1">
-                                        <RadioGroupItem value="2" id={`grade-2-${subject.id}`} className="text-yellow-500" />
-                                        <Label htmlFor={`grade-2-${subject.id}`} className="text-sm">2</Label>
-                                      </div>
-                                      <div className="flex items-center space-x-1">
-                                        <RadioGroupItem value="3" id={`grade-3-${subject.id}`} className="text-green-500" />
-                                        <Label htmlFor={`grade-3-${subject.id}`} className="text-sm">3</Label>
-                                      </div>
-                                    </RadioGroup>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                            
-                            <div className="border rounded-lg p-4 mt-6">
-                              <h3 className="font-medium mb-2">Feedback voor Roeitechniek</h3>
-                              <Textarea
-                                placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
-                                value={categoryFeedback[CATEGORIES.ROEITECHNIEK] || ''}
-                                onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.ROEITECHNIEK, e.target.value)}
-                                className="resize-none h-32"
-                              />
-                            </div>
-                          </motion.div>
-                        </TabsContent>
-
-                        <TabsContent 
-                          value={CATEGORIES.STUURKUNST} 
-                          className="space-y-4"
-                          asChild
-                        >
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            {stuurkunstSubjects.map((subject) => (
-                              <div key={subject.id} className="border rounded-lg p-4">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
-                                  <div>
-                                    <h3 className="font-medium">{subject.name}</h3>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                                        {subject.category}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="flex-shrink-0">
-                                    <RadioGroup
-                                      value={selectedGrades[subject.id]?.toString() || ""}
-                                      onValueChange={(value) => handleGradeChange(subject.id, parseInt(value))}
-                                      className="flex items-center space-x-2"
-                                    >
-                                      <div className="flex items-center space-x-1">
-                                        <RadioGroupItem value="1" id={`grade-1-${subject.id}`} className="text-red-500" />
-                                        <Label htmlFor={`grade-1-${subject.id}`} className="text-sm">1</Label>
-                                      </div>
-                                      <div className="flex items-center space-x-1">
-                                        <RadioGroupItem value="2" id={`grade-2-${subject.id}`} className="text-yellow-500" />
-                                        <Label htmlFor={`grade-2-${subject.id}`} className="text-sm">2</Label>
-                                      </div>
-                                      <div className="flex items-center space-x-1">
-                                        <RadioGroupItem value="3" id={`grade-3-${subject.id}`} className="text-green-500" />
-                                        <Label htmlFor={`grade-3-${subject.id}`} className="text-sm">3</Label>
-                                      </div>
-                                    </RadioGroup>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                            
-                            <div className="border rounded-lg p-4 mt-6">
-                              <h3 className="font-medium mb-2">Feedback voor Stuurkunst</h3>
-                              <Textarea
-                                placeholder="Vul hier je feedback in als je iets wilt delen met de cursist."
-                                value={categoryFeedback[CATEGORIES.STUURKUNST] || ''}
-                                onChange={(e) => handleCategoryFeedbackChange(CATEGORIES.STUURKUNST, e.target.value)}
+                                value={categoryFeedback[activeTab] || ''}
+                                onChange={(e) => handleCategoryFeedbackChange(activeTab, e.target.value)}
                                 className="resize-none h-32"
                               />
                             </div>
@@ -426,9 +393,6 @@ const TeacherDashboard = () => {
                               >
                                 {test.name}
                               </Label>
-                              <p className="text-sm text-muted-foreground">
-                                {test.description}
-                              </p>
                               {selectedStudentId && completionCount > 0 && (
                                 <Badge variant="outline" className="mt-1 text-xs bg-green-100 text-green-800 border-green-200 w-fit">
                                   {completionCount} keer gedaan

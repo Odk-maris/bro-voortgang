@@ -91,18 +91,222 @@ export const getStudentLatestCategoryFeedback = async (studentId: string | numbe
 };
 
 // Calculate student average grade for a specific subject
-// Updated to properly handle string or number studentId
-export const getStudentAverageGrade = (studentId: string | number, subjectId: number) => {
-  // Import the mock function for now
-  const mockGetStudentAverageGrade = require('./mockData').getStudentAverageGrade;
-  return mockGetStudentAverageGrade(convertId(studentId), subjectId);
+export const getStudentAverageGrade = async (studentId: string | number, subjectId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('grades')
+      .select('grade')
+      .eq('student_id', convertIdToString(studentId))
+      .eq('subject_id', subjectId);
+      
+    if (error) throw error;
+    
+    if (!data || data.length === 0) return 0;
+    
+    const sum = data.reduce((acc, curr) => acc + curr.grade, 0);
+    return sum / data.length;
+  } catch (error) {
+    console.error('Error calculating average grade:', error);
+    return 0;
+  }
 };
 
 // Get subject by ID
-export const getSubjectById = (subjectId: number) => {
-  // Import the mock function for now
-  const mockGetSubjectById = require('./mockData').getSubjectById;
-  return mockGetSubjectById(subjectId);
+export const getSubjectById = async (subjectId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('subjects')
+      .select('*')
+      .eq('id', subjectId)
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching subject:', error);
+    return null;
+  }
+};
+
+// Get subjects by category
+export const getSubjectsByCategory = async (category: CategoryEnum) => {
+  try {
+    const { data, error } = await supabase
+      .from('subjects')
+      .select('*')
+      .eq('category', category);
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error(`Error fetching ${category} subjects:`, error);
+    return [];
+  }
+};
+
+// Get user by ID
+export const getUserById = async (userId: string | number) => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', convertIdToString(userId))
+      .single();
+      
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return null;
+  }
+};
+
+// Get students by role
+export const getStudentsByRole = async (role: RoleEnum = 'student') => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('role', role);
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error(`Error fetching users with role ${role}:`, error);
+    return [];
+  }
+};
+
+// Add a new grade
+export const addGrade = async (studentId: string | number, subjectId: number, grade: number, teacherId: string | number, feedback: string = '') => {
+  try {
+    const { error } = await supabase
+      .from('grades')
+      .insert({
+        student_id: convertIdToString(studentId),
+        subject_id: subjectId,
+        grade: grade,
+        teacher_id: convertIdToString(teacherId),
+        feedback: feedback || null
+      });
+      
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error adding grade:', error);
+    toast.error('Failed to save grade');
+    return false;
+  }
+};
+
+// Add test completion
+export const addTestCompletion = async (studentId: string | number, testId: number, completed: boolean = true) => {
+  try {
+    const { error } = await supabase
+      .from('test_completions')
+      .insert({
+        student_id: convertIdToString(studentId),
+        test_id: testId,
+        completed: completed
+      });
+      
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error adding test completion:', error);
+    toast.error('Failed to save test completion');
+    return false;
+  }
+};
+
+// Add category feedback
+export const addCategoryFeedback = async (studentId: string | number, category: CategoryEnum | string, feedback: string, teacherId: string | number) => {
+  try {
+    const { error } = await supabase
+      .from('category_feedback')
+      .insert({
+        student_id: convertIdToString(studentId),
+        category: category as CategoryEnum,
+        feedback: feedback,
+        teacher_id: convertIdToString(teacherId)
+      });
+      
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error adding category feedback:', error);
+    toast.error('Failed to save feedback');
+    return false;
+  }
+};
+
+// Get student's latest grades
+export const getStudentLatestGrades = async (studentId: string | number, subjectId: number) => {
+  try {
+    const { data, error } = await supabase
+      .from('grades')
+      .select('*')
+      .eq('student_id', convertIdToString(studentId))
+      .eq('subject_id', subjectId)
+      .order('date', { ascending: false })
+      .limit(5);
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching student latest grades:', error);
+    return [];
+  }
+};
+
+// Get student category feedback
+export const getStudentCategoryFeedback = async (studentId: string | number, category: CategoryEnum | string) => {
+  try {
+    const { data, error } = await supabase
+      .from('category_feedback')
+      .select('*')
+      .eq('student_id', convertIdToString(studentId))
+      .eq('category', category)
+      .order('date', { ascending: false });
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error(`Error fetching ${category} feedback:`, error);
+    return [];
+  }
+};
+
+// Update subject active status
+export const updateSubjectActiveStatus = async (subjectId: number, active: boolean) => {
+  try {
+    const { error } = await supabase
+      .from('subjects')
+      .update({ active: active })
+      .eq('id', subjectId);
+      
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error updating subject status:', error);
+    toast.error('Failed to update subject status');
+    return false;
+  }
+};
+
+// Get all tests
+export const getAllTests = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('tests')
+      .select('*');
+      
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching tests:', error);
+    return [];
+  }
 };
 
 // Export constants from the existing mockData for compatibility
@@ -112,35 +316,4 @@ export const CATEGORIES = {
   STUURKUNST: 'stuurkunst' as CategoryEnum,
 };
 
-// Temporary bridge functions while we transition from mock to Supabase
-// In the future, you can update components to use Supabase queries directly
-
-// These functions temporarily use the mock data implementation from mockData.ts
-// but can be replaced with real Supabase queries in a complete migration
-import { 
-  getSubjectsByCategory as getMockSubjectsByCategory,
-  getStudentLatestGrades as getMockStudentLatestGrades,
-  getUserById as getMockUserById,
-  getStudentsByRole as getMockStudentsByRole,
-  addGrade as addMockGrade,
-  addTestCompletion as addMockTestCompletion,
-  addCategoryFeedback as addMockCategoryFeedback,
-  getStudentCategoryFeedback as getMockStudentCategoryFeedback,
-  tests as mockTests,
-} from './mockData';
-
-// Re-export functions that haven't been migrated yet
-export const getSubjectsByCategory = getMockSubjectsByCategory;
-
-// Update this function to handle string IDs properly
-export const getStudentLatestGrades = (studentId: string | number, subjectId: number) => {
-  return getMockStudentLatestGrades(convertId(studentId), subjectId);
-};
-
-export const getUserById = getMockUserById;
-export const getStudentsByRole = getMockStudentsByRole;
-export const addGrade = addMockGrade;
-export const addTestCompletion = addMockTestCompletion;
-export const addCategoryFeedback = addMockCategoryFeedback;
-export const getStudentCategoryFeedback = getMockStudentCategoryFeedback;
-export const tests = mockTests;
+// Update AdminPanel.tsx to use the Supabase data functions

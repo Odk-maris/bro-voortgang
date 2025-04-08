@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,27 +10,56 @@ import {
   getSubjectsByCategory, 
   updateSubjectActiveStatus,
   CATEGORIES,
-} from '@/utils/mockData';
+} from '@/utils/supabaseData';
 import { toast } from 'sonner';
 import UserManagement from '@/components/UserManagement';
+import { CategoryEnum } from '@/integrations/supabase/client';
 
 const AdminPanel = () => {
-  const [activeTab, setActiveTab] = useState(CATEGORIES.VERRICHTINGEN);
+  const [activeTab, setActiveTab] = useState<CategoryEnum>(CATEGORIES.VERRICHTINGEN);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [subjects, setSubjects] = useState({
+    [CATEGORIES.VERRICHTINGEN]: [],
+    [CATEGORIES.ROEITECHNIEK]: [],
+    [CATEGORIES.STUURKUNST]: []
+  });
+  const [loading, setLoading] = useState(true);
 
-  const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
-  const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
-  const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST);
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      setLoading(true);
+      try {
+        const verrichtingenSubjects = await getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
+        const roeitechniekSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
+        const stuurkunstSubjects = await getSubjectsByCategory(CATEGORIES.STUURKUNST);
+        
+        setSubjects({
+          [CATEGORIES.VERRICHTINGEN]: verrichtingenSubjects,
+          [CATEGORIES.ROEITECHNIEK]: roeitechniekSubjects,
+          [CATEGORIES.STUURKUNST]: stuurkunstSubjects
+        });
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+        toast.error('Failed to load subjects');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSubjectToggle = (subjectId: number, active: boolean) => {
-    updateSubjectActiveStatus(subjectId, active);
+    fetchSubjects();
+  }, [refreshKey]);
+
+  const handleSubjectToggle = async (subjectId: number, active: boolean) => {
+    const success = await updateSubjectActiveStatus(subjectId, active);
     
-    toast.success(`Subject status updated`, {
-      description: `Subject has been ${active ? 'enabled' : 'disabled'} for grading.`,
-    });
-    
-    // Force a re-render
-    setRefreshKey(prev => prev + 1);
+    if (success) {
+      toast.success(`Subject status updated`, {
+        description: `Subject has been ${active ? 'enabled' : 'disabled'} for grading.`,
+      });
+      
+      // Force a re-render to refresh the data
+      setRefreshKey(prev => prev + 1);
+    }
   };
 
   const getCategoryColor = (category: string) => {
@@ -67,88 +96,94 @@ const AdminPanel = () => {
                   Enable or disable subjects for grading by teachers. Disabled subjects cannot be graded.
                 </p>
                 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                  <TabsList className="grid grid-cols-3">
-                    <TabsTrigger value={CATEGORIES.VERRICHTINGEN}>Verrichtingen</TabsTrigger>
-                    <TabsTrigger value={CATEGORIES.ROEITECHNIEK}>Roeitechniek</TabsTrigger>
-                    <TabsTrigger value={CATEGORIES.STUURKUNST}>Stuurkunst</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value={CATEGORIES.VERRICHTINGEN} className="space-y-4">
-                    <div className="grid gap-4">
-                      {verrichtingenSubjects.map((subject) => (
-                        <div key={subject.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
-                            <h3 className="font-medium">{subject.name}</h3>
-                            <Badge variant="outline" className={`mt-1 ${getCategoryColor(subject.category)}`}>
-                              {subject.category}
-                            </Badge>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="h-8 w-8 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as CategoryEnum)} className="space-y-4">
+                    <TabsList className="grid grid-cols-3">
+                      <TabsTrigger value={CATEGORIES.VERRICHTINGEN}>Verrichtingen</TabsTrigger>
+                      <TabsTrigger value={CATEGORIES.ROEITECHNIEK}>Roeitechniek</TabsTrigger>
+                      <TabsTrigger value={CATEGORIES.STUURKUNST}>Stuurkunst</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value={CATEGORIES.VERRICHTINGEN} className="space-y-4">
+                      <div className="grid gap-4">
+                        {subjects[CATEGORIES.VERRICHTINGEN].map((subject) => (
+                          <div key={subject.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <h3 className="font-medium">{subject.name}</h3>
+                              <Badge variant="outline" className={`mt-1 ${getCategoryColor(subject.category)}`}>
+                                {subject.category}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id={`subject-${subject.id}`}
+                                checked={subject.active}
+                                onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
+                              />
+                              <Label htmlFor={`subject-${subject.id}`}>
+                                {subject.active ? 'Enabled' : 'Disabled'}
+                              </Label>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id={`subject-${subject.id}`}
-                              checked={subject.active}
-                              onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
-                            />
-                            <Label htmlFor={`subject-${subject.id}`}>
-                              {subject.active ? 'Enabled' : 'Disabled'}
-                            </Label>
+                        ))}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value={CATEGORIES.ROEITECHNIEK} className="space-y-4">
+                      <div className="grid gap-4">
+                        {subjects[CATEGORIES.ROEITECHNIEK].map((subject) => (
+                          <div key={subject.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <h3 className="font-medium">{subject.name}</h3>
+                              <Badge variant="outline" className={`mt-1 ${getCategoryColor(subject.category)}`}>
+                                {subject.category}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id={`subject-${subject.id}`}
+                                checked={subject.active}
+                                onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
+                              />
+                              <Label htmlFor={`subject-${subject.id}`}>
+                                {subject.active ? 'Enabled' : 'Disabled'}
+                              </Label>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value={CATEGORIES.ROEITECHNIEK} className="space-y-4">
-                    <div className="grid gap-4">
-                      {roeitechniekSubjects.map((subject) => (
-                        <div key={subject.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
-                            <h3 className="font-medium">{subject.name}</h3>
-                            <Badge variant="outline" className={`mt-1 ${getCategoryColor(subject.category)}`}>
-                              {subject.category}
-                            </Badge>
+                        ))}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value={CATEGORIES.STUURKUNST} className="space-y-4">
+                      <div className="grid gap-4">
+                        {subjects[CATEGORIES.STUURKUNST].map((subject) => (
+                          <div key={subject.id} className="flex items-center justify-between p-4 border rounded-lg">
+                            <div>
+                              <h3 className="font-medium">{subject.name}</h3>
+                              <Badge variant="outline" className={`mt-1 ${getCategoryColor(subject.category)}`}>
+                                {subject.category}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                id={`subject-${subject.id}`}
+                                checked={subject.active}
+                                onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
+                              />
+                              <Label htmlFor={`subject-${subject.id}`}>
+                                {subject.active ? 'Enabled' : 'Disabled'}
+                              </Label>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id={`subject-${subject.id}`}
-                              checked={subject.active}
-                              onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
-                            />
-                            <Label htmlFor={`subject-${subject.id}`}>
-                              {subject.active ? 'Enabled' : 'Disabled'}
-                            </Label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value={CATEGORIES.STUURKUNST} className="space-y-4">
-                    <div className="grid gap-4">
-                      {stuurkunstSubjects.map((subject) => (
-                        <div key={subject.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div>
-                            <h3 className="font-medium">{subject.name}</h3>
-                            <Badge variant="outline" className={`mt-1 ${getCategoryColor(subject.category)}`}>
-                              {subject.category}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id={`subject-${subject.id}`}
-                              checked={subject.active}
-                              onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
-                            />
-                            <Label htmlFor={`subject-${subject.id}`}>
-                              {subject.active ? 'Enabled' : 'Disabled'}
-                            </Label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
