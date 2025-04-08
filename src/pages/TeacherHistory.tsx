@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -21,7 +20,7 @@ import {
   getSubjectsByCategory,
   getUserById,
   getStudentCategoryFeedback,
-  getStudentTestCompletionCount,
+  getStudentTestCompletionCounts,
   getAllTests,
   CATEGORIES,
 } from '@/utils/supabaseData';
@@ -97,17 +96,8 @@ const TeacherHistory = () => {
         const sFeedback = await getStudentCategoryFeedback(selectedStudentId, CATEGORIES.STUURKUNST);
         setStuurkunstFeedback(sFeedback);
         
-        // Load test completion counts
-        const completionCounts: Record<number, number> = {};
-        if (tests.length > 0) {
-          await Promise.all(
-            tests.map(async (test) => {
-              const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
-              completionCounts[test.id] = count;
-            })
-          );
-          setTestCompletionCounts(completionCounts);
-        }
+        const completionCounts = await getStudentTestCompletionCounts(selectedStudentId);
+        setTestCompletionCounts(completionCounts);
       } catch (error) {
         console.error('Error loading student data:', error);
       } finally {
@@ -206,237 +196,237 @@ const TeacherHistory = () => {
                         <TabsTrigger value={CATEGORIES.STUURKUNST}>Stuurkunst</TabsTrigger>
                       </TabsList>
 
-                      <AnimatePresence mode="wait">
-                        <TabsContent 
-                          value={CATEGORIES.VERRICHTINGEN} 
-                          className="space-y-6"
-                          asChild
-                          key="verrichtingen"
-                        >
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
+                      <AnimatePresence>
+                        {activeTab === CATEGORIES.VERRICHTINGEN && (
+                          <TabsContent 
+                            value={CATEGORIES.VERRICHTINGEN} 
+                            className="space-y-6"
                           >
-                            {/* Category Feedback Section */}
-                            {verrichtingenFeedback.length > 0 && (
-                              <div className="border rounded-lg p-4 mb-6">
-                                <h3 className="font-medium mb-3">Feedback</h3>
-                                <div className="space-y-4">
-                                  {verrichtingenFeedback.map((feedback) => (
-                                    <div key={feedback.id} className="border-t pt-3">
-                                      <FeedbackItem 
-                                        feedback={feedback.feedback} 
-                                        date={feedback.date} 
-                                        teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          
-                            {/* Subjects Section */}
-                            {verrichtingenSubjects.map((subject) => {
-                              const subjectGrades = getSubjectGrades(subject.id);
-                              if (subjectGrades.length === 0) return null;
-                              
-                              return (
-                                <div key={subject.id} className="border rounded-lg p-4">
-                                  <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                      <h3 className="font-medium">{subject.name}</h3>
-                                      <Badge variant="outline" className="mt-1 bg-blue-100 text-blue-800 border-blue-200">
-                                        {subject.category}
-                                      </Badge>
-                                    </div>
-                                    <Badge variant="outline" className="text-sm">
-                                      {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <div className="space-y-3">
-                                    {subjectGrades.map((grade) => (
-                                      <div key={grade.id} className="border-t pt-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <div className="flex items-center gap-2">
-                                            <Badge 
-                                              className={`
-                                                ${grade.grade === 1 ? 'bg-red-100 text-red-700 border-red-200' : ''}
-                                                ${grade.grade === 2 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : ''}
-                                                ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
-                                              `}
-                                            >
-                                              Beoordeling: {grade.grade}
-                                            </Badge>
-                                            <span className="text-sm text-muted-foreground">
-                                              {new Date(grade.date).toLocaleDateString()}
-                                            </span>
-                                          </div>
-                                        </div>
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              {/* Category Feedback Section */}
+                              {verrichtingenFeedback.length > 0 && (
+                                <div className="border rounded-lg p-4 mb-6">
+                                  <h3 className="font-medium mb-3">Feedback</h3>
+                                  <div className="space-y-4">
+                                    {verrichtingenFeedback.map((feedback) => (
+                                      <div key={feedback.id} className="border-t pt-3">
+                                        <FeedbackItem 
+                                          feedback={feedback.feedback} 
+                                          date={feedback.date} 
+                                          teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'}
+                                        />
                                       </div>
                                     ))}
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </motion.div>
-                        </TabsContent>
+                              )}
+                            
+                              {/* Subjects Section */}
+                              {verrichtingenSubjects.map((subject) => {
+                                const subjectGrades = getSubjectGrades(subject.id);
+                                if (subjectGrades.length === 0) return null;
+                                
+                                return (
+                                  <div key={subject.id} className="border rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-4">
+                                      <div>
+                                        <h3 className="font-medium">{subject.name}</h3>
+                                        <Badge variant="outline" className="mt-1 bg-blue-100 text-blue-800 border-blue-200">
+                                          {subject.category}
+                                        </Badge>
+                                      </div>
+                                      <Badge variant="outline" className="text-sm">
+                                        {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                      {subjectGrades.map((grade) => (
+                                        <div key={grade.id} className="border-t pt-3">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                              <Badge 
+                                                className={`
+                                                  ${grade.grade === 1 ? 'bg-red-100 text-red-700 border-red-200' : ''}
+                                                  ${grade.grade === 2 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : ''}
+                                                  ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
+                                                `}
+                                              >
+                                                Beoordeling: {grade.grade}
+                                              </Badge>
+                                              <span className="text-sm text-muted-foreground">
+                                                {new Date(grade.date).toLocaleDateString()}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </motion.div>
+                          </TabsContent>
+                        )}
 
-                        <TabsContent 
-                          value={CATEGORIES.ROEITECHNIEK} 
-                          className="space-y-6"
-                          asChild
-                          key="roeitechniek"
-                        >
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
+                        {activeTab === CATEGORIES.ROEITECHNIEK && (
+                          <TabsContent 
+                            value={CATEGORIES.ROEITECHNIEK} 
+                            className="space-y-6"
                           >
-                            {/* Category Feedback Section */}
-                            {roeitechniekFeedback.length > 0 && (
-                              <div className="border rounded-lg p-4 mb-6">
-                                <h3 className="font-medium mb-3">Feedback</h3>
-                                <div className="space-y-4">
-                                  {roeitechniekFeedback.map((feedback) => (
-                                    <div key={feedback.id} className="border-t pt-3">
-                                      <FeedbackItem 
-                                        feedback={feedback.feedback} 
-                                        date={feedback.date} 
-                                        teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'} 
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          
-                            {/* Subjects Section */}
-                            {roeitechniekSubjects.map((subject) => {
-                              const subjectGrades = getSubjectGrades(subject.id);
-                              if (subjectGrades.length === 0) return null;
-                              
-                              return (
-                                <div key={subject.id} className="border rounded-lg p-4">
-                                  <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                      <h3 className="font-medium">{subject.name}</h3>
-                                      <Badge variant="outline" className="mt-1 bg-green-100 text-green-800 border-green-200">
-                                        {subject.category}
-                                      </Badge>
-                                    </div>
-                                    <Badge variant="outline" className="text-sm">
-                                      {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <div className="space-y-3">
-                                    {subjectGrades.map((grade) => (
-                                      <div key={grade.id} className="border-t pt-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <div className="flex items-center gap-2">
-                                            <Badge 
-                                              className={`
-                                                ${grade.grade === 1 ? 'bg-red-100 text-red-700 border-red-200' : ''}
-                                                ${grade.grade === 2 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : ''}
-                                                ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
-                                              `}
-                                            >
-                                              Beoordeling: {grade.grade}
-                                            </Badge>
-                                            <span className="text-sm text-muted-foreground">
-                                              {new Date(grade.date).toLocaleDateString()}
-                                            </span>
-                                          </div>
-                                        </div>
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              {/* Category Feedback Section */}
+                              {roeitechniekFeedback.length > 0 && (
+                                <div className="border rounded-lg p-4 mb-6">
+                                  <h3 className="font-medium mb-3">Feedback</h3>
+                                  <div className="space-y-4">
+                                    {roeitechniekFeedback.map((feedback) => (
+                                      <div key={feedback.id} className="border-t pt-3">
+                                        <FeedbackItem 
+                                          feedback={feedback.feedback} 
+                                          date={feedback.date} 
+                                          teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'} 
+                                        />
                                       </div>
                                     ))}
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </motion.div>
-                        </TabsContent>
+                              )}
+                            
+                              {/* Subjects Section */}
+                              {roeitechniekSubjects.map((subject) => {
+                                const subjectGrades = getSubjectGrades(subject.id);
+                                if (subjectGrades.length === 0) return null;
+                                
+                                return (
+                                  <div key={subject.id} className="border rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-4">
+                                      <div>
+                                        <h3 className="font-medium">{subject.name}</h3>
+                                        <Badge variant="outline" className="mt-1 bg-green-100 text-green-800 border-green-200">
+                                          {subject.category}
+                                        </Badge>
+                                      </div>
+                                      <Badge variant="outline" className="text-sm">
+                                        {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                      {subjectGrades.map((grade) => (
+                                        <div key={grade.id} className="border-t pt-3">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                              <Badge 
+                                                className={`
+                                                  ${grade.grade === 1 ? 'bg-red-100 text-red-700 border-red-200' : ''}
+                                                  ${grade.grade === 2 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : ''}
+                                                  ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
+                                                `}
+                                              >
+                                                Beoordeling: {grade.grade}
+                                              </Badge>
+                                              <span className="text-sm text-muted-foreground">
+                                                {new Date(grade.date).toLocaleDateString()}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </motion.div>
+                          </TabsContent>
+                        )}
 
-                        <TabsContent 
-                          value={CATEGORIES.STUURKUNST} 
-                          className="space-y-6"
-                          asChild
-                          key="stuurkunst"
-                        >
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
+                        {activeTab === CATEGORIES.STUURKUNST && (
+                          <TabsContent 
+                            value={CATEGORIES.STUURKUNST} 
+                            className="space-y-6"
                           >
-                            {/* Category Feedback Section */}
-                            {stuurkunstFeedback.length > 0 && (
-                              <div className="border rounded-lg p-4 mb-6">
-                                <h3 className="font-medium mb-3">Feedback</h3>
-                                <div className="space-y-4">
-                                  {stuurkunstFeedback.map((feedback) => (
-                                    <div key={feedback.id} className="border-t pt-3">
-                                      <FeedbackItem 
-                                        feedback={feedback.feedback} 
-                                        date={feedback.date} 
-                                        teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'} 
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          
-                            {/* Subjects Section */}
-                            {stuurkunstSubjects.map((subject) => {
-                              const subjectGrades = getSubjectGrades(subject.id);
-                              if (subjectGrades.length === 0) return null;
-                              
-                              return (
-                                <div key={subject.id} className="border rounded-lg p-4">
-                                  <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                      <h3 className="font-medium">{subject.name}</h3>
-                                      <Badge variant="outline" className="mt-1 bg-purple-100 text-purple-800 border-purple-200">
-                                        {subject.category}
-                                      </Badge>
-                                    </div>
-                                    <Badge variant="outline" className="text-sm">
-                                      {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <div className="space-y-3">
-                                    {subjectGrades.map((grade) => (
-                                      <div key={grade.id} className="border-t pt-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <div className="flex items-center gap-2">
-                                            <Badge 
-                                              className={`
-                                                ${grade.grade === 1 ? 'bg-red-100 text-red-700 border-red-200' : ''}
-                                                ${grade.grade === 2 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : ''}
-                                                ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
-                                              `}
-                                            >
-                                              Beoordeling: {grade.grade}
-                                            </Badge>
-                                            <span className="text-sm text-muted-foreground">
-                                              {new Date(grade.date).toLocaleDateString()}
-                                            </span>
-                                          </div>
-                                        </div>
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              {/* Category Feedback Section */}
+                              {stuurkunstFeedback.length > 0 && (
+                                <div className="border rounded-lg p-4 mb-6">
+                                  <h3 className="font-medium mb-3">Feedback</h3>
+                                  <div className="space-y-4">
+                                    {stuurkunstFeedback.map((feedback) => (
+                                      <div key={feedback.id} className="border-t pt-3">
+                                        <FeedbackItem 
+                                          feedback={feedback.feedback} 
+                                          date={feedback.date} 
+                                          teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'} 
+                                        />
                                       </div>
                                     ))}
                                   </div>
                                 </div>
-                              );
-                            })}
-                          </motion.div>
-                        </TabsContent>
+                              )}
+                            
+                              {/* Subjects Section */}
+                              {stuurkunstSubjects.map((subject) => {
+                                const subjectGrades = getSubjectGrades(subject.id);
+                                if (subjectGrades.length === 0) return null;
+                                
+                                return (
+                                  <div key={subject.id} className="border rounded-lg p-4">
+                                    <div className="flex items-center justify-between mb-4">
+                                      <div>
+                                        <h3 className="font-medium">{subject.name}</h3>
+                                        <Badge variant="outline" className="mt-1 bg-purple-100 text-purple-800 border-purple-200">
+                                          {subject.category}
+                                        </Badge>
+                                      </div>
+                                      <Badge variant="outline" className="text-sm">
+                                        {subjectGrades.length} beoordeling{subjectGrades.length !== 1 ? 'en' : ''}
+                                      </Badge>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                      {subjectGrades.map((grade) => (
+                                        <div key={grade.id} className="border-t pt-3">
+                                          <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                              <Badge 
+                                                className={`
+                                                  ${grade.grade === 1 ? 'bg-red-100 text-red-700 border-red-200' : ''}
+                                                  ${grade.grade === 2 ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : ''}
+                                                  ${grade.grade === 3 ? 'bg-green-100 text-green-700 border-green-200' : ''}
+                                                `}
+                                              >
+                                                Beoordeling: {grade.grade}
+                                              </Badge>
+                                              <span className="text-sm text-muted-foreground">
+                                                {new Date(grade.date).toLocaleDateString()}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </motion.div>
+                          </TabsContent>
+                        )}
                       </AnimatePresence>
                     </Tabs>
                   </CardContent>
