@@ -91,6 +91,7 @@ export const getStudentLatestCategoryFeedback = async (studentId: string | numbe
 };
 
 // Calculate student average grade for a specific subject
+// Updated to properly handle string or number studentId
 export const getStudentAverageGrade = (studentId: string | number, subjectId: number) => {
   // Import the mock function for now
   const mockGetStudentAverageGrade = require('./mockData').getStudentAverageGrade;
@@ -130,7 +131,12 @@ import {
 
 // Re-export functions that haven't been migrated yet
 export const getSubjectsByCategory = getMockSubjectsByCategory;
-export const getStudentLatestGrades = getMockStudentLatestGrades;
+
+// Update this function to handle string IDs properly
+export const getStudentLatestGrades = (studentId: string | number, subjectId: number) => {
+  return getMockStudentLatestGrades(convertId(studentId), subjectId);
+};
+
 export const getUserById = getMockUserById;
 export const getStudentsByRole = getMockStudentsByRole;
 export const addGrade = addMockGrade;

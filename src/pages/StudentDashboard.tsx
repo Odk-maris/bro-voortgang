@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -13,7 +12,8 @@ import {
   getUserById,
   CATEGORIES,
   tests,
-  convertId
+  convertId,
+  convertIdToString
 } from '@/utils/supabaseData';
 import SubjectCard from '@/components/SubjectCard';
 import GradeChart from '@/components/GradeChart';
@@ -34,21 +34,18 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Only load data if user is authenticated
     if (!user) return;
 
     const loadData = async () => {
       setLoading(true);
 
       try {
-        // Load student data
         const grades = await getStudentGrades(user.id);
         setStudentGrades(grades);
 
         const tests = await getStudentTests(user.id);
         setStudentTests(tests);
 
-        // Load category feedback
         const vFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.VERRICHTINGEN);
         setVerrichtingenFeedback(vFeedback);
 
@@ -58,7 +55,6 @@ const StudentDashboard = () => {
         const sFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.STUURKUNST);
         setStuurkunstFeedback(sFeedback);
 
-        // Load test completion counts
         const counts: Record<number, number> = {};
         for (const test of tests) {
           const count = await getStudentTestCompletionCount(user.id, test.id);
@@ -77,13 +73,12 @@ const StudentDashboard = () => {
 
   if (!user) return null;
 
-  const studentIdNum = convertId(user.id);
+  const studentId = user.id;
   
   const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
   const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
   const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST);
   
-  // Calculate grade distribution for charts
   const countGradesByValue = (grades: typeof studentGrades) => {
     const counts = { 1: 0, 2: 0, 3: 0 };
     grades.forEach(grade => counts[grade.grade as keyof typeof counts]++);
@@ -179,7 +174,7 @@ const StudentDashboard = () => {
               {verrichtingenSubjects.map(subject => (
                 <SubjectCard 
                   key={subject.id}
-                  studentId={studentIdNum}
+                  studentId={studentId}
                   subjectId={subject.id} 
                 />
               ))}
@@ -206,7 +201,7 @@ const StudentDashboard = () => {
               {roeitechniekSubjects.map(subject => (
                 <SubjectCard 
                   key={subject.id}
-                  studentId={studentIdNum}
+                  studentId={studentId}
                   subjectId={subject.id} 
                 />
               ))}
@@ -233,7 +228,7 @@ const StudentDashboard = () => {
               {stuurkunstSubjects.map(subject => (
                 <SubjectCard 
                   key={subject.id}
-                  studentId={studentIdNum}
+                  studentId={studentId}
                   subjectId={subject.id} 
                 />
               ))}
