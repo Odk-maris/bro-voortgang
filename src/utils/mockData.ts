@@ -71,8 +71,8 @@ export const tests = [
   { id: 10, name: 'Brienenoord N>Z', description: 'Gevorderde praktische vaardigheden' },
 ];
 
-// Users
-export const users = [
+// Initial test user accounts - used only if no saved users exist
+const initialUsers = [
   { 
     id: 1, 
     username: 'student1', 
@@ -111,6 +111,28 @@ export const users = [
     role: 'admin' 
   },
 ];
+
+// Initialize users from localStorage or use initial test accounts if none exist
+const initializeUsers = () => {
+  const storedUsers = localStorage.getItem('roeiapp_users');
+  if (storedUsers) {
+    try {
+      return JSON.parse(storedUsers);
+    } catch (error) {
+      console.error('Failed to parse stored users, using initial accounts', error);
+      return [...initialUsers];
+    }
+  }
+  return [...initialUsers];
+};
+
+// Users with persistence
+export let users = initializeUsers();
+
+// Helper function to save users to localStorage
+const saveUsers = () => {
+  localStorage.setItem('roeiapp_users', JSON.stringify(users));
+};
 
 // Category feedback
 export const categoryFeedback = [
@@ -189,16 +211,16 @@ export const grades = [
   { id: 15, studentId: 2, subjectId: 30, grade: 2, date: '2023-06-05', teacherId: 4, feedback: 'Goede stuurvaardigheden.' },
 ];
 
-// Student test completions (modified to track multiple completions)
+// Student test completions
 export const testCompletions = [
   { id: 1, studentId: 1, testId: 1, completed: true, date: '2023-04-10' },
-  { id: 2, studentId: 1, testId: 1, completed: true, date: '2023-05-15' }, // Second completion of test 1
+  { id: 2, studentId: 1, testId: 1, completed: true, date: '2023-05-15' },
   { id: 3, studentId: 1, testId: 2, completed: true, date: '2023-04-15' },
   { id: 4, studentId: 1, testId: 3, completed: true, date: '2023-05-10' },
   { id: 5, studentId: 1, testId: 4, completed: false, date: null },
   { id: 6, studentId: 2, testId: 1, completed: true, date: '2023-04-12' },
   { id: 7, studentId: 2, testId: 2, completed: true, date: '2023-04-18' },
-  { id: 8, studentId: 2, testId: 2, completed: true, date: '2023-05-20' }, // Second completion of test 2
+  { id: 8, studentId: 2, testId: 2, completed: true, date: '2023-05-20' },
   { id: 9, studentId: 2, testId: 3, completed: false, date: null },
 ];
 
@@ -244,7 +266,7 @@ export const getStudentAverageGrade = (studentId: number, subjectId: number) => 
   const studentSubjectGrades = grades
     .filter(grade => grade.studentId === studentId && grade.subjectId === subjectId)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3); // Only use the last 3 grades for average
+    .slice(0, 3);
   
   if (studentSubjectGrades.length === 0) return 0;
   
@@ -384,6 +406,7 @@ export const addUser = (
   };
   
   users.push(newUser as any);
+  saveUsers();
   return newUser;
 };
 
@@ -402,13 +425,12 @@ export const updateUser = (
       username,
       name,
       role,
-      // Only update password if provided
       ...(password ? { password } : {}),
-      // Only include groep for students
       ...(role === 'student' ? { groep: groep || GROUPS.NONE } : {})
     };
     
     users[userIndex] = updatedUser as any;
+    saveUsers();
     return users[userIndex];
   }
   return null;
@@ -418,6 +440,7 @@ export const deleteUser = (id: number) => {
   const userIndex = users.findIndex(user => user.id === id);
   if (userIndex !== -1) {
     const deletedUser = users.splice(userIndex, 1)[0];
+    saveUsers();
     return deletedUser;
   }
   return null;
