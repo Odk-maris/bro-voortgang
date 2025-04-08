@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -7,16 +8,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Pencil, Trash, UserPlus } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, User, RoleEnum, GroupEnum } from '@/integrations/supabase/client';
 
 const GROUPS = {
-  DIZA: 'diza',
-  DOZO: 'dozo',
-  NONE: 'none'
-} as const;
+  DIZA: 'diza' as GroupEnum,
+  DOZO: 'dozo' as GroupEnum,
+  NONE: 'none' as GroupEnum
+};
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -26,7 +27,7 @@ const UserManagement = () => {
     username: '',
     name: '',
     password: '',
-    role: 'student' as 'student' | 'teacher' | 'admin',
+    role: 'student' as RoleEnum,
     groep: GROUPS.NONE
   });
   
@@ -35,7 +36,7 @@ const UserManagement = () => {
     username: '',
     name: '',
     password: '',
-    role: 'student' as 'student' | 'teacher' | 'admin',
+    role: 'student' as RoleEnum,
     groep: GROUPS.NONE
   });
   
@@ -98,7 +99,7 @@ const UserManagement = () => {
     }
     
     try {
-      const updates: any = {
+      const updates: Partial<User> = {
         username: editUser.username,
         name: editUser.name,
         role: editUser.role,
@@ -146,7 +147,7 @@ const UserManagement = () => {
     }
   };
   
-  const prepareEditUser = (user: any) => {
+  const prepareEditUser = (user: User) => {
     setEditUser({
       id: user.id,
       username: user.username,
@@ -175,7 +176,7 @@ const UserManagement = () => {
     }
   };
   
-  const getGroupBadgeColor = (groep: string) => {
+  const getGroupBadgeColor = (groep: GroupEnum | null | undefined) => {
     switch(groep) {
       case GROUPS.DIZA:
         return 'bg-purple-100 text-purple-800 border-purple-200';
@@ -251,7 +252,7 @@ const UserManagement = () => {
                 </Label>
                 <Select 
                   value={newUser.role} 
-                  onValueChange={(value: 'student' | 'teacher' | 'admin') => setNewUser({...newUser, role: value})}
+                  onValueChange={(value: RoleEnum) => setNewUser({...newUser, role: value})}
                 >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Selecteer rol" />
@@ -271,7 +272,7 @@ const UserManagement = () => {
                   </Label>
                   <Select 
                     value={newUser.groep} 
-                    onValueChange={(value: string) => setNewUser({...newUser, groep: value})}
+                    onValueChange={(value: GroupEnum) => setNewUser({...newUser, groep: value})}
                   >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Selecteer groep" />
@@ -318,8 +319,8 @@ const UserManagement = () => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  {user.role === 'student' && user.groep && (
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getGroupBadgeColor(user.groep || GROUPS.NONE)}`}>
+                  {user.role === 'student' && user.groep && user.groep !== 'none' && (
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getGroupBadgeColor(user.groep)}`}>
                       {user.groep || 'Geen'}
                     </span>
                   )}
@@ -394,7 +395,7 @@ const UserManagement = () => {
               </Label>
               <Select 
                 value={editUser.role} 
-                onValueChange={(value: 'student' | 'teacher' | 'admin') => setEditUser({...editUser, role: value})}
+                onValueChange={(value: RoleEnum) => setEditUser({...editUser, role: value})}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Selecteer rol" />
@@ -414,7 +415,7 @@ const UserManagement = () => {
                 </Label>
                 <Select 
                   value={editUser.groep} 
-                  onValueChange={(value: string) => setEditUser({...editUser, groep: value})}
+                  onValueChange={(value: GroupEnum) => setEditUser({...editUser, groep: value})}
                 >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Selecteer groep" />

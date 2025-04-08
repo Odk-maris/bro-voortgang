@@ -10,3 +10,15 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Type helpers for tables
+export type Tables = Database['public']['Tables'];
+export type GroupEnum = Database['public']['Enums']['group_enum'];
+export type RoleEnum = Database['public']['Enums']['role_enum'];
+export type CategoryEnum = Database['public']['Enums']['category_enum'];
+export type User = Tables['users']['Row'];
+export type Subject = Tables['subjects']['Row'];
+export type Grade = Tables['grades']['Row'];
+export type TestCompletion = Tables['test_completions']['Row'];
+export type CategoryFeedback = Tables['category_feedback']['Row'];
+export type Test = Tables['tests']['Row'];

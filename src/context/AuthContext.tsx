@@ -2,18 +2,19 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, User, RoleEnum, GroupEnum } from '@/integrations/supabase/client';
 
-interface User {
+// Custom interface that matches our app's user model
+interface AppUser {
   id: string;
   username: string;
   name: string;
-  role: 'student' | 'teacher' | 'admin';
-  groep?: string;
+  role: RoleEnum;
+  groep?: GroupEnum;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -22,7 +23,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -73,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
       
       if (data && !error) {
-        const userData = {
+        const userData: AppUser = {
           id: data.id,
           username: data.username,
           name: data.name,
