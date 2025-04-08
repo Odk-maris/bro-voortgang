@@ -90,6 +90,20 @@ export const getStudentLatestCategoryFeedback = async (studentId: string | numbe
   }
 };
 
+// Calculate student average grade for a specific subject
+export const getStudentAverageGrade = (studentId: string | number, subjectId: number) => {
+  // Import the mock function for now
+  const mockGetStudentAverageGrade = require('./mockData').getStudentAverageGrade;
+  return mockGetStudentAverageGrade(convertId(studentId), subjectId);
+};
+
+// Get subject by ID
+export const getSubjectById = (subjectId: number) => {
+  // Import the mock function for now
+  const mockGetSubjectById = require('./mockData').getSubjectById;
+  return mockGetSubjectById(subjectId);
+};
+
 // Export constants from the existing mockData for compatibility
 export const CATEGORIES = {
   VERRICHTINGEN: 'verrichtingen' as CategoryEnum,
@@ -112,8 +126,6 @@ import {
   addCategoryFeedback as addMockCategoryFeedback,
   getStudentCategoryFeedback as getMockStudentCategoryFeedback,
   tests as mockTests,
-  getStudentAverageGrade,
-  getSubjectById
 } from './mockData';
 
 // Re-export functions that haven't been migrated yet

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -35,20 +36,31 @@ import {
   convertId,
   convertIdToString,
 } from '@/utils/supabaseData';
+import { CategoryEnum } from '@/integrations/supabase/client';
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState(CATEGORIES.VERRICHTINGEN);
+  const [activeTab, setActiveTab] = useState<CategoryEnum>(CATEGORIES.VERRICHTINGEN);
   const [selectedGrades, setSelectedGrades] = useState<Record<number, number>>({});
   const [categoryFeedback, setCategoryFeedback] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [selectedTests, setSelectedTests] = useState<Record<number, boolean>>({});
+  const [testCompletionCounts, setTestCompletionCounts] = useState<Record<number, number>>({});
 
   const students = getStudentsByRole();
 
   useEffect(() => {
     if (selectedStudentId) {
+      const loadTestCounts = async () => {
+        const counts: Record<number, number> = {};
+        for (const test of tests) {
+          const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
+          counts[test.id] = count;
+        }
+        setTestCompletionCounts(counts);
+      };
+      
       const studentIdNum = convertId(selectedStudentId);
       
       const initialTestState: Record<number, boolean> = {};
@@ -62,6 +74,8 @@ const TeacherDashboard = () => {
         [CATEGORIES.ROEITECHNIEK]: '',
         [CATEGORIES.STUURKUNST]: ''
       });
+      
+      loadTestCounts();
     }
   }, [selectedStudentId]);
 
@@ -193,7 +207,11 @@ const TeacherDashboard = () => {
                     <CardTitle>Onderdelen beoordelen</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                    <Tabs 
+                      value={activeTab} 
+                      onValueChange={(value) => setActiveTab(value as CategoryEnum)} 
+                      className="space-y-4"
+                    >
                       <TabsList className="grid grid-cols-3">
                         <TabsTrigger value={CATEGORIES.VERRICHTINGEN}>Verrichtingen</TabsTrigger>
                         <TabsTrigger value={CATEGORIES.ROEITECHNIEK}>Roeitechniek</TabsTrigger>
@@ -390,33 +408,36 @@ const TeacherDashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {tests.map((test) => (
-                        <div key={test.id} className="flex items-start space-x-3">
-                          <div className="flex items-center space-x-2 pt-1">
-                            <Checkbox 
-                              id={`test-${test.id}`} 
-                              checked={selectedTests[test.id] || false}
-                              onCheckedChange={(checked) => handleTestChange(test.id, checked === true)}
-                            />
+                      {tests.map((test) => {
+                        const completionCount = testCompletionCounts[test.id] || 0;
+                        return (
+                          <div key={test.id} className="flex items-start space-x-3">
+                            <div className="flex items-center space-x-2 pt-1">
+                              <Checkbox 
+                                id={`test-${test.id}`} 
+                                checked={selectedTests[test.id] || false}
+                                onCheckedChange={(checked) => handleTestChange(test.id, checked === true)}
+                              />
+                            </div>
+                            <div className="grid gap-1.5 leading-none">
+                              <Label
+                                htmlFor={`test-${test.id}`}
+                                className="text-sm font-medium leading-none cursor-pointer"
+                              >
+                                {test.name}
+                              </Label>
+                              <p className="text-sm text-muted-foreground">
+                                {test.description}
+                              </p>
+                              {selectedStudentId && completionCount > 0 && (
+                                <Badge variant="outline" className="mt-1 text-xs bg-green-100 text-green-800 border-green-200 w-fit">
+                                  {completionCount} keer gedaan
+                                </Badge>
+                              )}
+                            </div>
                           </div>
-                          <div className="grid gap-1.5 leading-none">
-                            <Label
-                              htmlFor={`test-${test.id}`}
-                              className="text-sm font-medium leading-none cursor-pointer"
-                            >
-                              {test.name}
-                            </Label>
-                            <p className="text-sm text-muted-foreground">
-                              {test.description}
-                            </p>
-                            {selectedStudentId && getStudentTestCompletionCount(selectedStudentId, test.id) > 0 && (
-                              <Badge variant="outline" className="mt-1 text-xs bg-green-100 text-green-800 border-green-200 w-fit">
-                                {getStudentTestCompletionCount(selectedStudentId, test.id)} keer gedaan
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>

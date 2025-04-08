@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,28 +20,68 @@ import GradeChart from '@/components/GradeChart';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2 } from 'lucide-react';
 import FeedbackItem from '@/components/FeedbackItem';
+import { CategoryEnum } from '@/integrations/supabase/client';
 
 const StudentDashboard = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState(CATEGORIES.VERRICHTINGEN);
+  const [activeTab, setActiveTab] = useState<CategoryEnum>(CATEGORIES.VERRICHTINGEN);
+  const [studentGrades, setStudentGrades] = useState<any[]>([]);
+  const [studentTests, setStudentTests] = useState<any[]>([]);
+  const [verrichtingenFeedback, setVerrichtingenFeedback] = useState<any>(null);
+  const [roeitechniekFeedback, setRoeitechniekFeedback] = useState<any>(null);
+  const [stuurkunstFeedback, setStuurkunstFeedback] = useState<any>(null);
+  const [testCompletionCounts, setTestCompletionCounts] = useState<Record<number, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Only load data if user is authenticated
+    if (!user) return;
+
+    const loadData = async () => {
+      setLoading(true);
+
+      try {
+        // Load student data
+        const grades = await getStudentGrades(user.id);
+        setStudentGrades(grades);
+
+        const tests = await getStudentTests(user.id);
+        setStudentTests(tests);
+
+        // Load category feedback
+        const vFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.VERRICHTINGEN);
+        setVerrichtingenFeedback(vFeedback);
+
+        const rFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.ROEITECHNIEK);
+        setRoeitechniekFeedback(rFeedback);
+        
+        const sFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.STUURKUNST);
+        setStuurkunstFeedback(sFeedback);
+
+        // Load test completion counts
+        const counts: Record<number, number> = {};
+        for (const test of tests) {
+          const count = await getStudentTestCompletionCount(user.id, test.id);
+          counts[test.id] = count;
+        }
+        setTestCompletionCounts(counts);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
+  }, [user]);
 
   if (!user) return null;
 
-  // Convert string ID to number for mock data functions that still expect number IDs
-  const studentId = user.id;
-  const studentIdNum = convertId(studentId); // Convert to number for functions that expect number
-  
-  const studentGrades = getStudentGrades(studentId);
-  const studentTests = getStudentTests(studentId);
+  const studentIdNum = convertId(user.id);
   
   const verrichtingenSubjects = getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
   const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
   const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST);
-  
-  // Get latest category feedback
-  const verrichtingenFeedback = getStudentLatestCategoryFeedback(studentId, CATEGORIES.VERRICHTINGEN);
-  const roeitechniekFeedback = getStudentLatestCategoryFeedback(studentId, CATEGORIES.ROEITECHNIEK);
-  const stuurkunstFeedback = getStudentLatestCategoryFeedback(studentId, CATEGORIES.STUURKUNST);
   
   // Calculate grade distribution for charts
   const countGradesByValue = (grades: typeof studentGrades) => {
@@ -57,10 +97,18 @@ const StudentDashboard = () => {
   const gradeDistribution = countGradesByValue(studentGrades);
   const totalTestCompletions = studentTests.filter(test => test.completed).length;
   
-  // Count test completions
-  const getTestCount = (testId: number) => {
-    return getStudentTestCompletionCount(studentId, testId);
-  };
+  if (loading) {
+    return (
+      <DashboardLayout allowedRoles={['student']}>
+        <div className="container py-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <span className="ml-3">Gegevens laden...</span>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
   
   return (
     <DashboardLayout allowedRoles={['student']}>
@@ -100,7 +148,11 @@ const StudentDashboard = () => {
           />
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={(value) => setActiveTab(value as CategoryEnum)} 
+          className="space-y-4"
+        >
           <TabsList className="grid grid-cols-3">
             <TabsTrigger value={CATEGORIES.VERRICHTINGEN}>Verrichtingen</TabsTrigger>
             <TabsTrigger value={CATEGORIES.ROEITECHNIEK}>Roeitechniek</TabsTrigger>
@@ -117,7 +169,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={verrichtingenFeedback.feedback} 
                     date={verrichtingenFeedback.date} 
-                    teacherName={verrichtingenFeedback.teacherId ? getUserById(convertId(verrichtingenFeedback.teacherId))?.name || 'Instructeur' : 'Instructeur'} 
+                    teacherName={verrichtingenFeedback.teacher_id ? getUserById(convertId(verrichtingenFeedback.teacher_id))?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -144,7 +196,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={roeitechniekFeedback.feedback} 
                     date={roeitechniekFeedback.date} 
-                    teacherName={roeitechniekFeedback.teacherId ? getUserById(convertId(roeitechniekFeedback.teacherId))?.name || 'Instructeur' : 'Instructeur'} 
+                    teacherName={roeitechniekFeedback.teacher_id ? getUserById(convertId(roeitechniekFeedback.teacher_id))?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -171,7 +223,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={stuurkunstFeedback.feedback} 
                     date={stuurkunstFeedback.date} 
-                    teacherName={stuurkunstFeedback.teacherId ? getUserById(convertId(stuurkunstFeedback.teacherId))?.name || 'Instructeur' : 'Instructeur'} 
+                    teacherName={stuurkunstFeedback.teacher_id ? getUserById(convertId(stuurkunstFeedback.teacher_id))?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -193,7 +245,7 @@ const StudentDashboard = () => {
           <h2 className="text-lg font-medium mb-4">Bruggen gedaan</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tests.map((test) => {
-              const completionCount = getTestCount(test.id);
+              const completionCount = testCompletionCounts[test.id] || 0;
               return (
                 <Card key={test.id} className={`transition-colors ${completionCount > 0 ? 'border-green-100 bg-green-50/50' : ''}`}>
                   <CardContent className="p-4 flex items-center justify-between">
