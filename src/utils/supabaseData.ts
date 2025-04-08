@@ -51,13 +51,13 @@ export const getStudentTests = async (studentId: string | number) => {
   }
 };
 
-export const getStudentTestCompletionCount = async (studentId: string | number, testId: number) => {
+export const getStudentTestCompletionCount = async (studentId: string | number, testId: string | number) => {
   try {
     const { data, error, count } = await supabase
       .from('test_completions')
       .select('*', { count: 'exact' })
       .eq('student_id', convertIdToString(studentId))
-      .eq('test_id', testId)
+      .eq('test_id', convertId(testId))
       .eq('completed', true);
       
     if (error) throw error;

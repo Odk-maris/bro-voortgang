@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -57,7 +58,8 @@ const StudentDashboard = () => {
 
         const counts: Record<number, number> = {};
         for (const test of tests) {
-          const count = await getStudentTestCompletionCount(user.id, test.id);
+          // Fix: Convert user.id string to number using convertId
+          const count = await getStudentTestCompletionCount(user.id, convertId(test.id));
           counts[test.id] = count;
         }
         setTestCompletionCounts(counts);
