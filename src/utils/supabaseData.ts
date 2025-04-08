@@ -19,12 +19,12 @@ export function convertIdToString(id: number | string): string {
 }
 
 // Get student data with basic error handling
-export const getStudentGrades = async (studentId: string) => {
+export const getStudentGrades = async (studentId: string | number) => {
   try {
     const { data, error } = await supabase
       .from('grades')
       .select('*')
-      .eq('student_id', studentId);
+      .eq('student_id', convertIdToString(studentId));
       
     if (error) throw error;
     return data || [];
@@ -35,12 +35,12 @@ export const getStudentGrades = async (studentId: string) => {
   }
 };
 
-export const getStudentTests = async (studentId: string) => {
+export const getStudentTests = async (studentId: string | number) => {
   try {
     const { data, error } = await supabase
       .from('test_completions')
       .select('*')
-      .eq('student_id', studentId);
+      .eq('student_id', convertIdToString(studentId));
       
     if (error) throw error;
     return data || [];
@@ -51,12 +51,12 @@ export const getStudentTests = async (studentId: string) => {
   }
 };
 
-export const getStudentTestCompletionCount = async (studentId: string, testId: number) => {
+export const getStudentTestCompletionCount = async (studentId: string | number, testId: number) => {
   try {
     const { data, error, count } = await supabase
       .from('test_completions')
       .select('*', { count: 'exact' })
-      .eq('student_id', studentId)
+      .eq('student_id', convertIdToString(studentId))
       .eq('test_id', testId)
       .eq('completed', true);
       
@@ -68,12 +68,12 @@ export const getStudentTestCompletionCount = async (studentId: string, testId: n
   }
 };
 
-export const getStudentLatestCategoryFeedback = async (studentId: string, category: CategoryEnum) => {
+export const getStudentLatestCategoryFeedback = async (studentId: string | number, category: CategoryEnum) => {
   try {
     const { data, error } = await supabase
       .from('category_feedback')
       .select('*')
-      .eq('student_id', studentId)
+      .eq('student_id', convertIdToString(studentId))
       .eq('category', category)
       .order('date', { ascending: false })
       .limit(1)
@@ -111,7 +111,9 @@ import {
   addTestCompletion as addMockTestCompletion,
   addCategoryFeedback as addMockCategoryFeedback,
   getStudentCategoryFeedback as getMockStudentCategoryFeedback,
-  tests as mockTests
+  tests as mockTests,
+  getStudentAverageGrade,
+  getSubjectById
 } from './mockData';
 
 // Re-export functions that haven't been migrated yet

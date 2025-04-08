@@ -13,7 +13,8 @@ import {
   getUserById,
   CATEGORIES,
   tests,
-} from '@/utils/mockData';
+  convertId
+} from '@/utils/supabaseData';
 import SubjectCard from '@/components/SubjectCard';
 import GradeChart from '@/components/GradeChart';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +27,10 @@ const StudentDashboard = () => {
 
   if (!user) return null;
 
+  // Convert string ID to number for mock data functions that still expect number IDs
   const studentId = user.id;
+  const studentIdNum = convertId(studentId); // Convert to number for functions that expect number
+  
   const studentGrades = getStudentGrades(studentId);
   const studentTests = getStudentTests(studentId);
   
@@ -113,7 +117,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={verrichtingenFeedback.feedback} 
                     date={verrichtingenFeedback.date} 
-                    teacherName={verrichtingenFeedback.teacherId ? getUserById(verrichtingenFeedback.teacherId)?.name || 'Instructeur' : 'Instructeur'} 
+                    teacherName={verrichtingenFeedback.teacherId ? getUserById(convertId(verrichtingenFeedback.teacherId))?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -123,7 +127,7 @@ const StudentDashboard = () => {
               {verrichtingenSubjects.map(subject => (
                 <SubjectCard 
                   key={subject.id}
-                  studentId={studentId}
+                  studentId={studentIdNum}
                   subjectId={subject.id} 
                 />
               ))}
@@ -140,7 +144,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={roeitechniekFeedback.feedback} 
                     date={roeitechniekFeedback.date} 
-                    teacherName={roeitechniekFeedback.teacherId ? getUserById(roeitechniekFeedback.teacherId)?.name || 'Instructeur' : 'Instructeur'} 
+                    teacherName={roeitechniekFeedback.teacherId ? getUserById(convertId(roeitechniekFeedback.teacherId))?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -150,7 +154,7 @@ const StudentDashboard = () => {
               {roeitechniekSubjects.map(subject => (
                 <SubjectCard 
                   key={subject.id}
-                  studentId={studentId}
+                  studentId={studentIdNum}
                   subjectId={subject.id} 
                 />
               ))}
@@ -167,7 +171,7 @@ const StudentDashboard = () => {
                   <FeedbackItem 
                     feedback={stuurkunstFeedback.feedback} 
                     date={stuurkunstFeedback.date} 
-                    teacherName={stuurkunstFeedback.teacherId ? getUserById(stuurkunstFeedback.teacherId)?.name || 'Instructeur' : 'Instructeur'} 
+                    teacherName={stuurkunstFeedback.teacherId ? getUserById(convertId(stuurkunstFeedback.teacherId))?.name || 'Instructeur' : 'Instructeur'} 
                   />
                 </CardContent>
               </Card>
@@ -177,7 +181,7 @@ const StudentDashboard = () => {
               {stuurkunstSubjects.map(subject => (
                 <SubjectCard 
                   key={subject.id}
-                  studentId={studentId}
+                  studentId={studentIdNum}
                   subjectId={subject.id} 
                 />
               ))}

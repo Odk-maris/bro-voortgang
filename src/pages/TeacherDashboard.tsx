@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -33,7 +32,9 @@ import {
   CATEGORIES,
   getStudentCategoryFeedback,
   addCategoryFeedback,
-} from '@/utils/mockData';
+  convertId,
+  convertIdToString,
+} from '@/utils/supabaseData';
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
@@ -48,7 +49,7 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     if (selectedStudentId) {
-      const studentId = parseInt(selectedStudentId);
+      const studentIdNum = convertId(selectedStudentId);
       
       const initialTestState: Record<number, boolean> = {};
       tests.forEach(test => {
@@ -96,23 +97,25 @@ const TeacherDashboard = () => {
       return;
     }
 
-    const studentId = parseInt(selectedStudentId);
+    const studentIdNum = convertId(selectedStudentId);
+    const teacherId = user?.id ? convertId(user.id) : 0;
+    
     setLoading(true);
     
     try {
       Object.entries(selectedGrades).forEach(([subjectId, grade]) => {
-        addGrade(studentId, parseInt(subjectId), grade, user?.id || 0, '');
+        addGrade(studentIdNum, parseInt(subjectId), grade, teacherId, '');
       });
       
       Object.entries(categoryFeedback).forEach(([category, feedback]) => {
         if (feedback.trim()) {
-          addCategoryFeedback(studentId, category, feedback, user?.id || 0);
+          addCategoryFeedback(studentIdNum, category, feedback, teacherId);
         }
       });
       
       Object.entries(selectedTests).forEach(([testId, isCompleted]) => {
         if (isCompleted) {
-          addTestCompletion(studentId, parseInt(testId), true);
+          addTestCompletion(studentIdNum, parseInt(testId), true);
         }
       });
 
@@ -141,7 +144,7 @@ const TeacherDashboard = () => {
   const roeitechniekSubjects = getSubjectsByCategory(CATEGORIES.ROEITECHNIEK).filter(subject => subject.active);
   const stuurkunstSubjects = getSubjectsByCategory(CATEGORIES.STUURKUNST).filter(subject => subject.active);
 
-  const selectedStudent = selectedStudentId ? getUserById(parseInt(selectedStudentId)) : null;
+  const selectedStudent = selectedStudentId ? getUserById(convertId(selectedStudentId)) : null;
 
   return (
     <DashboardLayout allowedRoles={['teacher', 'admin']}>
@@ -406,9 +409,9 @@ const TeacherDashboard = () => {
                             <p className="text-sm text-muted-foreground">
                               {test.description}
                             </p>
-                            {getStudentTestCompletionCount(parseInt(selectedStudentId), test.id) > 0 && (
+                            {selectedStudentId && getStudentTestCompletionCount(selectedStudentId, test.id) > 0 && (
                               <Badge variant="outline" className="mt-1 text-xs bg-green-100 text-green-800 border-green-200 w-fit">
-                                {getStudentTestCompletionCount(parseInt(selectedStudentId), test.id)} keer gedaan
+                                {getStudentTestCompletionCount(selectedStudentId, test.id)} keer gedaan
                               </Badge>
                             )}
                           </div>

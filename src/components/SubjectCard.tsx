@@ -5,14 +5,14 @@ import {
   getStudentLatestGrades, 
   getStudentAverageGrade, 
   getSubjectById 
-} from '@/utils/mockData';
+} from '@/utils/supabaseData';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import TestProgressBar from './TestProgressBar';
 import FeedbackItem from './FeedbackItem';
 
 interface SubjectCardProps {
-  studentId: number;
+  studentId: number | string;  // Accept either number or string student ID
   subjectId: number;
 }
 
