@@ -1,11 +1,11 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getUserByCredentials, getUserById } from '../utils/mockData';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
-  id: number;
+  id: string;
   username: string;
   name: string;
   role: 'student' | 'teacher' | 'admin';
@@ -27,19 +27,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
-          const foundUser = getUserById(parsedUser.id);
-          if (foundUser) {
+          // Fetch the user from Supabase to ensure it's still valid
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', parsedUser.id)
+            .single();
+            
+          if (data && !error) {
             setUser({
-              id: foundUser.id,
-              username: foundUser.username,
-              name: foundUser.name,
-              role: foundUser.role as 'student' | 'teacher' | 'admin',
-              ...(foundUser.role === 'student' && { groep: foundUser.groep })
+              id: data.id,
+              username: data.username,
+              name: data.name,
+              role: data.role,
+              ...(data.role === 'student' && { groep: data.groep })
             });
           } else {
             localStorage.removeItem('user');
@@ -57,53 +63,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string): Promise<boolean> => {
     setLoading(true);
     
-    // Simulate network request
-    return new Promise(resolve => {
-      setTimeout(() => {
-        try {
-          const foundUser = getUserByCredentials(username, password);
-          if (foundUser) {
-            const userData = {
-              id: foundUser.id,
-              username: foundUser.username,
-              name: foundUser.name,
-              role: foundUser.role as 'student' | 'teacher' | 'admin',
-              ...(foundUser.role === 'student' && { groep: foundUser.groep })
-            };
-            
-            localStorage.setItem('user', JSON.stringify(userData));
-            setUser(userData);
-            
-            toast.success('Login successful', {
-              description: `Welcome back, ${foundUser.name}!`,
-            });
-            
-            // Redirect based on role
-            if (userData.role === 'student') {
-              navigate('/student');
-            } else if (userData.role === 'teacher') {
-              navigate('/teacher');
-            } else if (userData.role === 'admin') {
-              navigate('/admin');
-            }
-            
-            resolve(true);
-          } else {
-            toast.error('Login failed', {
-              description: 'Invalid username or password',
-            });
-            resolve(false);
-          }
-        } catch (error) {
-          toast.error('Login failed', {
-            description: 'An error occurred during login',
-          });
-          resolve(false);
-        } finally {
-          setLoading(false);
+    try {
+      // Query Supabase for the user with matching credentials
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .eq('password', password)  // Note: In a production app, you should use proper password hashing
+        .single();
+      
+      if (data && !error) {
+        const userData = {
+          id: data.id,
+          username: data.username,
+          name: data.name,
+          role: data.role,
+          ...(data.role === 'student' && { groep: data.groep })
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        
+        toast.success('Login successful', {
+          description: `Welcome back, ${data.name}!`,
+        });
+        
+        // Redirect based on role
+        if (data.role === 'student') {
+          navigate('/student');
+        } else if (data.role === 'teacher') {
+          navigate('/teacher');
+        } else if (data.role === 'admin') {
+          navigate('/admin');
         }
-      }, 800); // Simulate network delay
-    });
+        
+        return true;
+      } else {
+        toast.error('Login failed', {
+          description: 'Invalid username or password',
+        });
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Login failed', {
+        description: 'An error occurred during login',
+      });
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {

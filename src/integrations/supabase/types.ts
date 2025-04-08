@@ -9,7 +9,217 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      category_feedback: {
+        Row: {
+          category: Database["public"]["Enums"]["category_enum"]
+          created_at: string | null
+          date: string
+          feedback: string
+          id: string
+          student_id: string
+          teacher_id: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["category_enum"]
+          created_at?: string | null
+          date?: string
+          feedback: string
+          id?: string
+          student_id: string
+          teacher_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["category_enum"]
+          created_at?: string | null
+          date?: string
+          feedback?: string
+          id?: string
+          student_id?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_feedback_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_feedback_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grades: {
+        Row: {
+          created_at: string | null
+          date: string
+          feedback: string | null
+          grade: number
+          id: string
+          student_id: string
+          subject_id: number
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          feedback?: string | null
+          grade: number
+          id?: string
+          student_id: string
+          subject_id: number
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          feedback?: string | null
+          grade?: number
+          id?: string
+          student_id?: string
+          subject_id?: number
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grades_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grades_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          active: boolean
+          category: Database["public"]["Enums"]["category_enum"]
+          id: number
+          name: string
+        }
+        Insert: {
+          active?: boolean
+          category: Database["public"]["Enums"]["category_enum"]
+          id?: number
+          name: string
+        }
+        Update: {
+          active?: boolean
+          category?: Database["public"]["Enums"]["category_enum"]
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      test_completions: {
+        Row: {
+          completed: boolean
+          created_at: string | null
+          date: string | null
+          id: string
+          student_id: string
+          test_id: number
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          student_id: string
+          test_id: number
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          student_id?: string
+          test_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_completions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_completions_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tests: {
+        Row: {
+          description: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          description?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          description?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          groep: Database["public"]["Enums"]["group_enum"] | null
+          id: string
+          name: string
+          password: string
+          role: Database["public"]["Enums"]["role_enum"]
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          groep?: Database["public"]["Enums"]["group_enum"] | null
+          id?: string
+          name: string
+          password: string
+          role: Database["public"]["Enums"]["role_enum"]
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          groep?: Database["public"]["Enums"]["group_enum"] | null
+          id?: string
+          name?: string
+          password?: string
+          role?: Database["public"]["Enums"]["role_enum"]
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +228,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      category_enum: "verrichtingen" | "roeitechniek" | "stuurkunst"
+      group_enum: "diza" | "dozo" | "none"
+      role_enum: "student" | "teacher" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +345,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      category_enum: ["verrichtingen", "roeitechniek", "stuurkunst"],
+      group_enum: ["diza", "dozo", "none"],
+      role_enum: ["student", "teacher", "admin"],
+    },
   },
 } as const

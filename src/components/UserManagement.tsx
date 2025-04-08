@@ -1,12 +1,4 @@
-
-import { useState } from 'react';
-import { 
-  users, 
-  addUser, 
-  updateUser, 
-  deleteUser,
-  GROUPS
-} from '@/utils/mockData';
+import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -15,8 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Pencil, Trash, UserPlus } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+const GROUPS = {
+  DIZA: 'diza',
+  DOZO: 'dozo',
+  NONE: 'none'
+} as const;
 
 const UserManagement = () => {
+  const [users, setUsers] = useState<any[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -31,7 +31,7 @@ const UserManagement = () => {
   });
   
   const [editUser, setEditUser] = useState({
-    id: 0,
+    id: '',
     username: '',
     name: '',
     password: '',
@@ -39,64 +39,110 @@ const UserManagement = () => {
     groep: GROUPS.NONE
   });
   
-  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const { data, error } = await supabase.from('users').select('*');
+        if (error) {
+          throw error;
+        }
+        setUsers(data || []);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('Failed to load users');
+      }
+    };
+
+    fetchUsers();
+  }, [refreshKey]);
   
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (!newUser.username || !newUser.name || !newUser.password) {
       toast.error('Alle velden zijn verplicht');
       return;
     }
     
-    addUser(
-      newUser.username, 
-      newUser.password, 
-      newUser.name, 
-      newUser.role, 
-      newUser.role === 'student' ? newUser.groep : undefined
-    );
-    
-    toast.success('Gebruiker succesvol toegevoegd');
-    setIsAddOpen(false);
-    setNewUser({
-      username: '',
-      name: '',
-      password: '',
-      role: 'student',
-      groep: GROUPS.NONE
-    });
-    setRefreshKey(prev => prev + 1);
+    try {
+      const { error } = await supabase.from('users').insert({
+        username: newUser.username,
+        name: newUser.name,
+        password: newUser.password,
+        role: newUser.role,
+        groep: newUser.role === 'student' ? newUser.groep : null
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Gebruiker succesvol toegevoegd');
+      setIsAddOpen(false);
+      setNewUser({
+        username: '',
+        name: '',
+        password: '',
+        role: 'student',
+        groep: GROUPS.NONE
+      });
+      setRefreshKey(prev => prev + 1);
+    } catch (error: any) {
+      console.error('Error adding user:', error);
+      toast.error(`Fout bij toevoegen gebruiker: ${error.message}`);
+    }
   };
   
-  const handleEditUser = () => {
+  const handleEditUser = async () => {
     if (!editUser.username || !editUser.name) {
       toast.error('Gebruikersnaam en naam zijn verplicht');
       return;
     }
     
-    // Only update password if it was changed (not empty)
-    const passwordToUpdate = editUser.password.trim() === '' ? null : editUser.password;
-    
-    updateUser(
-      editUser.id, 
-      editUser.username, 
-      passwordToUpdate, 
-      editUser.name, 
-      editUser.role,
-      editUser.role === 'student' ? editUser.groep : undefined
-    );
-    
-    toast.success('Gebruiker succesvol bijgewerkt');
-    setIsEditOpen(false);
-    setRefreshKey(prev => prev + 1);
+    try {
+      const updates: any = {
+        username: editUser.username,
+        name: editUser.name,
+        role: editUser.role,
+        groep: editUser.role === 'student' ? editUser.groep : null
+      };
+      
+      if (editUser.password.trim() !== '') {
+        updates.password = editUser.password;
+      }
+      
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', editUser.id);
+      
+      if (error) throw error;
+      
+      toast.success('Gebruiker succesvol bijgewerkt');
+      setIsEditOpen(false);
+      setRefreshKey(prev => prev + 1);
+    } catch (error: any) {
+      console.error('Error updating user:', error);
+      toast.error(`Fout bij bijwerken gebruiker: ${error.message}`);
+    }
   };
   
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (userToDelete) {
-      deleteUser(userToDelete);
-      toast.success('Gebruiker succesvol verwijderd');
-      setIsDeleteOpen(false);
-      setUserToDelete(null);
-      setRefreshKey(prev => prev + 1);
+      try {
+        const { error } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', userToDelete);
+        
+        if (error) throw error;
+        
+        toast.success('Gebruiker succesvol verwijderd');
+        setIsDeleteOpen(false);
+        setUserToDelete(null);
+        setRefreshKey(prev => prev + 1);
+      } catch (error: any) {
+        console.error('Error deleting user:', error);
+        toast.error(`Fout bij verwijderen gebruiker: ${error.message}`);
+      }
     }
   };
   
@@ -105,14 +151,14 @@ const UserManagement = () => {
       id: user.id,
       username: user.username,
       name: user.name,
-      password: '', // Don't show existing password
+      password: '',
       role: user.role,
       groep: user.role === 'student' ? (user.groep || GROUPS.NONE) : GROUPS.NONE
     });
     setIsEditOpen(true);
   };
   
-  const prepareDeleteUser = (userId: number) => {
+  const prepareDeleteUser = (userId: string) => {
     setUserToDelete(userId);
     setIsDeleteOpen(true);
   };
@@ -146,7 +192,6 @@ const UserManagement = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Gebruikers beheren</h2>
         
-        {/* Add User Dialog */}
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-1">
@@ -249,7 +294,6 @@ const UserManagement = () => {
         </Dialog>
       </div>
       
-      {/* User Table */}
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -265,7 +309,7 @@ const UserManagement = () => {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.id}</TableCell>
+                <TableCell className="font-medium">{user.id.substring(0, 8)}...</TableCell>
                 <TableCell>{user.username}</TableCell>
                 <TableCell>{user.name}</TableCell>
                 <TableCell>
@@ -274,7 +318,7 @@ const UserManagement = () => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  {user.role === 'student' && (
+                  {user.role === 'student' && user.groep && (
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getGroupBadgeColor(user.groep || GROUPS.NONE)}`}>
                       {user.groep || 'Geen'}
                     </span>
@@ -296,7 +340,6 @@ const UserManagement = () => {
         </Table>
       </div>
       
-      {/* Edit User Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
@@ -393,7 +436,6 @@ const UserManagement = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Delete User Confirmation Dialog */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
