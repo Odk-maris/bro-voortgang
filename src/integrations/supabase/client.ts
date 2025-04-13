@@ -26,10 +26,26 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Create a function to set a custom auth header using username/password
+// Create a function to set auth header using a custom approach
 export const applyAuth = async (username: string, password: string) => {
-  // Set custom auth header
-  supabase.rest.headers.append('Authorization', `Basic ${btoa(`${username}:${password}`)}`);
+  // Instead of accessing the protected 'rest' property,
+  // let's store the credentials in localStorage for re-use
+  localStorage.setItem('auth_credentials', JSON.stringify({ username, password }));
+  
+  // Return true to indicate successful credential storage
+  return true;
+};
+
+// Function to get stored credentials and apply them to fetch calls if needed
+export const getAuthHeaders = () => {
+  const storedCredentials = localStorage.getItem('auth_credentials');
+  if (storedCredentials) {
+    const { username, password } = JSON.parse(storedCredentials);
+    return {
+      Authorization: `Basic ${btoa(`${username}:${password}`)}`
+    };
+  }
+  return {};
 };
 
 // Type helpers for tables

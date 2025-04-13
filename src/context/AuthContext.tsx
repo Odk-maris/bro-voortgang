@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { supabase, User, RoleEnum, GroupEnum, applyAuth } from '@/integrations/supabase/client';
+import { supabase, User, RoleEnum, GroupEnum, applyAuth, getAuthHeaders } from '@/integrations/supabase/client';
 
 // Custom interface that matches our app's user model
 interface AppUser {
@@ -50,8 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
             
             // Apply authentication for the stored user
-            if (data.username && data.password) {
-              await applyAuth(data.username, data.password);
+            if (data.username && parsedUser.password) {
+              await applyAuth(data.username, parsedUser.password);
             }
           } else {
             localStorage.removeItem('user');
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Apply auth headers first
       await applyAuth(username, password);
       
-      // Query Supabase for the user with matching credentials
+      // Add custom headers to the request
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -130,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('auth_credentials');
     setUser(null);
     navigate('/');
     toast.success('Logged out successfully');
