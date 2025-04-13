@@ -13,7 +13,16 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true // Needed for authentication to work properly
+    detectSessionInUrl: true, // Needed for authentication to work properly
+    storage: localStorage
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'lovable'
+    }
+  },
+  db: {
+    schema: 'public'
   }
 });
 
@@ -28,4 +37,3 @@ export type Grade = Tables['grades']['Row'];
 export type TestCompletion = Tables['test_completions']['Row'];
 export type CategoryFeedback = Tables['category_feedback']['Row'];
 export type Test = Tables['tests']['Row'];
-

@@ -77,12 +77,9 @@ export const getStudentLatestCategoryFeedback = async (studentId: string | numbe
       .eq('category', category)
       .order('date', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
       
-    if (error && error.code !== 'PGRST116') { // Not found error
-      throw error;
-    }
-    
+    if (error) throw error;
     return data || null;
   } catch (error) {
     console.error(`Error fetching ${category} feedback:`, error);
@@ -118,7 +115,7 @@ export const getSubjectById = async (subjectId: number) => {
       .from('subjects')
       .select('*')
       .eq('id', subjectId)
-      .single();
+      .maybeSingle();
       
     if (error) throw error;
     return data;
@@ -151,7 +148,7 @@ export const getUserById = async (userId: string | number) => {
       .from('users')
       .select('*')
       .eq('id', convertIdToString(userId))
-      .single();
+      .maybeSingle();
       
     if (error) throw error;
     return data;
@@ -177,7 +174,7 @@ export const getStudentsByRole = async (role: RoleEnum = 'student') => {
   }
 };
 
-// Add a new grade - Improved to work with RLS
+// Add a new grade - Fixed to work properly with the Supabase RLS
 export const addGrade = async (studentId: string | number, subjectId: number, grade: number, teacherId: string | number, feedback: string = '') => {
   try {
     console.log('Adding grade with parameters:', { 
@@ -197,7 +194,9 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
         teacher_id: convertIdToString(teacherId),
         feedback: feedback || null,
         date: new Date().toISOString().split('T')[0]
-      });
+      })
+      .select()
+      .maybeSingle();
     
     if (error) {
       console.error('Supabase error adding grade:', error);
@@ -208,40 +207,49 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
     return true;
   } catch (error) {
     console.error('Error adding grade:', error);
-    toast.error('Failed to save grade. Please check console for details.');
+    toast.error('Failed to save grade: ' + (error as Error).message);
     return false;
   }
 };
 
-// Add test completion - Improved to work with RLS
+// Add test completion - Fixed to work properly with RLS
 export const addTestCompletion = async (studentId: string | number, testId: number, completed: boolean = true) => {
   try {
+    const stringStudentId = convertIdToString(studentId);
     console.log('Adding test completion with parameters:', { 
-      student_id: convertIdToString(studentId), 
+      student_id: stringStudentId, 
       test_id: testId, 
       completed 
     });
     
     // First check if there's already a completion
-    const { data: existingData } = await supabase
+    const { data: existingData, error: fetchError } = await supabase
       .from('test_completions')
-      .select('*')
-      .eq('student_id', convertIdToString(studentId))
-      .eq('test_id', testId);
+      .select('id')
+      .eq('student_id', stringStudentId)
+      .eq('test_id', testId)
+      .maybeSingle();
+      
+    if (fetchError) {
+      console.error('Error checking existing test completion:', fetchError);
+      throw fetchError;
+    }
     
-    // If exists, we update instead of insert
-    if (existingData && existingData.length > 0) {
-      console.log('Test completion already exists, updating instead');
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    if (existingData) {
+      console.log('Test completion already exists with id:', existingData.id);
+      // Update existing record
       const { error } = await supabase
         .from('test_completions')
         .update({ 
           completed: completed,
-          date: new Date().toISOString().split('T')[0] 
+          date: currentDate
         })
-        .eq('id', existingData[0].id);
+        .eq('id', existingData.id);
       
       if (error) {
-        console.error('Supabase error updating test completion:', error);
+        console.error('Error updating test completion:', error);
         throw error;
       }
     } else {
@@ -249,14 +257,14 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
       const { error } = await supabase
         .from('test_completions')
         .insert({
-          student_id: convertIdToString(studentId),
+          student_id: stringStudentId,
           test_id: testId,
           completed: completed,
-          date: new Date().toISOString().split('T')[0]
+          date: currentDate
         });
       
       if (error) {
-        console.error('Supabase error adding test completion:', error);
+        console.error('Error inserting test completion:', error);
         throw error;
       }
     }
@@ -264,13 +272,13 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
     console.log('Test completion saved successfully');
     return true;
   } catch (error) {
-    console.error('Error adding test completion:', error);
-    toast.error('Failed to save test completion. Please check console for details.');
+    console.error('Error saving test completion:', error);
+    toast.error('Failed to save test completion: ' + (error as Error).message);
     return false;
   }
 };
 
-// Add category feedback - Improved to work with RLS
+// Add category feedback - Fixed to work properly with RLS
 export const addCategoryFeedback = async (studentId: string | number, category: CategoryEnum, feedback: string, teacherId: string | number) => {
   if (!feedback.trim()) {
     console.log('Skipping empty feedback submission');
@@ -278,33 +286,38 @@ export const addCategoryFeedback = async (studentId: string | number, category: 
   }
   
   try {
+    const stringStudentId = convertIdToString(studentId);
+    const stringTeacherId = convertIdToString(teacherId);
+    
     console.log('Adding category feedback with parameters:', { 
-      student_id: convertIdToString(studentId), 
+      student_id: stringStudentId, 
       category, 
       feedback, 
-      teacher_id: convertIdToString(teacherId) 
+      teacher_id: stringTeacherId 
     });
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('category_feedback')
       .insert({
-        student_id: convertIdToString(studentId),
+        student_id: stringStudentId,
         category: category,
         feedback: feedback,
-        teacher_id: convertIdToString(teacherId),
+        teacher_id: stringTeacherId,
         date: new Date().toISOString().split('T')[0]
-      });
+      })
+      .select()
+      .maybeSingle();
       
     if (error) {
-      console.error('Supabase error adding category feedback:', error);
+      console.error('Error adding category feedback:', error);
       throw error;
     }
     
-    console.log('Category feedback added successfully');
+    console.log('Category feedback added successfully:', data);
     return true;
   } catch (error) {
     console.error('Error adding category feedback:', error);
-    toast.error('Failed to save feedback. Please check console for details.');
+    toast.error('Failed to save feedback: ' + (error as Error).message);
     return false;
   }
 };
@@ -346,26 +359,28 @@ export const getStudentCategoryFeedback = async (studentId: string | number, cat
   }
 };
 
-// Update subject active status - Improved for RLS
+// Update subject active status - Fixed to work with RLS
 export const updateSubjectActiveStatus = async (subjectId: number, active: boolean) => {
   try {
     console.log(`Updating subject ${subjectId} active status to ${active}`);
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('subjects')
       .update({ active: active })
-      .eq('id', subjectId);
+      .eq('id', subjectId)
+      .select()
+      .maybeSingle();
       
     if (error) {
-      console.error('Supabase error updating subject status:', error);
+      console.error('Error updating subject status:', error);
       throw error;
     }
     
-    console.log(`Subject ${subjectId} active status updated successfully`);
+    console.log(`Subject ${subjectId} active status updated successfully:`, data);
     return true;
   } catch (error) {
     console.error('Error updating subject status:', error);
-    toast.error('Failed to update subject status');
+    toast.error('Failed to update subject status: ' + (error as Error).message);
     return false;
   }
 };

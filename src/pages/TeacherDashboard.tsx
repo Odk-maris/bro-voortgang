@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -28,10 +29,8 @@ import {
   getAllTests,
   CATEGORIES,
   addCategoryFeedback,
-  convertId,
-  convertIdToString,
 } from '@/utils/supabaseData';
-import { CategoryEnum } from '@/integrations/supabase/client';
+import { CategoryEnum, supabase } from '@/integrations/supabase/client';
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
@@ -56,6 +55,7 @@ const TeacherDashboard = () => {
     const loadData = async () => {
       setDataLoading(true);
       try {
+        console.log('Loading initial data');
         const fetchedStudents = await getStudentsByRole('student');
         setStudents(fetchedStudents);
 
@@ -71,6 +71,7 @@ const TeacherDashboard = () => {
 
         const allTests = await getAllTests();
         setTests(allTests);
+        console.log('Initial data loaded successfully', { students: fetchedStudents.length, tests: allTests.length });
       } catch (error) {
         console.error('Error loading initial data:', error);
         toast.error('Failed to load data');
@@ -87,6 +88,7 @@ const TeacherDashboard = () => {
       const loadSelectedStudentData = async () => {
         setLoading(true);
         try {
+          console.log('Loading selected student data:', selectedStudentId);
           const student = await getUserById(selectedStudentId);
           setSelectedStudent(student);
 
@@ -108,6 +110,8 @@ const TeacherDashboard = () => {
             [CATEGORIES.ROEITECHNIEK]: '',
             [CATEGORIES.STUURKUNST]: ''
           });
+          
+          console.log('Student data loaded successfully', { student, testCompletions: counts });
         } catch (error) {
           console.error('Error loading student data:', error);
           toast.error('Failed to load student data');
@@ -157,50 +161,81 @@ const TeacherDashboard = () => {
       return;
     }
     
+    console.log('Saving data with user ID:', user.id);
+    console.log('Selected grades:', selectedGrades);
+    console.log('Category feedback:', categoryFeedback);
+    console.log('Selected tests:', selectedTests);
+    
     setLoading(true);
     
     try {
-      const gradePromises = Object.entries(selectedGrades).map(([subjectId, grade]) => {
-        return addGrade(selectedStudentId, parseInt(subjectId), grade, user.id, '');
-      });
+      // Check Supabase session
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('Current Supabase session:', sessionData);
       
-      const feedbackPromises = Object.entries(categoryFeedback).map(([category, feedback]) => {
-        if (feedback.trim()) {
-          return addCategoryFeedback(selectedStudentId, category as CategoryEnum, feedback, user.id);
+      // Save grades
+      let gradesSaved = 0;
+      for (const [subjectId, grade] of Object.entries(selectedGrades)) {
+        console.log(`Saving grade for subject ${subjectId}: ${grade}`);
+        const success = await addGrade(selectedStudentId, parseInt(subjectId), grade, user.id, '');
+        if (success) {
+          gradesSaved++;
         }
-        return Promise.resolve(true);
-      });
-      
-      const testPromises = Object.entries(selectedTests).map(([testId, isCompleted]) => {
-        if (isCompleted) {
-          return addTestCompletion(selectedStudentId, parseInt(testId), true);
-        }
-        return Promise.resolve(true);
-      });
-
-      await Promise.all([...gradePromises, ...feedbackPromises, ...testPromises]);
-
-      toast.success('Succesvol opgeslagen', {
-        description: 'De beoordelingen, feedback en bruggen zijn bijgewerkt.',
-      });
-      
-      setSelectedGrades({});
-      
-      const resetTests: Record<number, boolean> = {};
-      tests.forEach(test => {
-        resetTests[test.id] = false;
-      });
-      setSelectedTests(resetTests);
-      
-      if (selectedStudentId) {
-        const counts: Record<number, number> = {};
-        for (const test of tests) {
-          const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
-          counts[test.id] = count;
-        }
-        setTestCompletionCounts(counts);
       }
       
+      // Save feedback for each category if it's not empty
+      let feedbackSaved = 0;
+      for (const [category, feedback] of Object.entries(categoryFeedback)) {
+        if (feedback.trim()) {
+          console.log(`Saving feedback for category ${category}`);
+          const success = await addCategoryFeedback(selectedStudentId, category as CategoryEnum, feedback, user.id);
+          if (success) {
+            feedbackSaved++;
+          }
+        }
+      }
+      
+      // Save test completions
+      let testsSaved = 0;
+      for (const [testId, isCompleted] of Object.entries(selectedTests)) {
+        if (isCompleted) {
+          console.log(`Saving test completion for test ${testId}`);
+          const success = await addTestCompletion(selectedStudentId, parseInt(testId), true);
+          if (success) {
+            testsSaved++;
+          }
+        }
+      }
+
+      const totalSaved = gradesSaved + feedbackSaved + testsSaved;
+      if (totalSaved > 0) {
+        toast.success('Succesvol opgeslagen', {
+          description: `${gradesSaved} beoordelingen, ${feedbackSaved} feedback en ${testsSaved} bruggen zijn bijgewerkt.`,
+        });
+        
+        // Reset the form
+        setSelectedGrades({});
+        
+        const resetTests: Record<number, boolean> = {};
+        tests.forEach(test => {
+          resetTests[test.id] = false;
+        });
+        setSelectedTests(resetTests);
+        
+        // Update test completion counts
+        if (selectedStudentId) {
+          const counts: Record<number, number> = {};
+          for (const test of tests) {
+            const count = await getStudentTestCompletionCount(selectedStudentId, test.id);
+            counts[test.id] = count;
+          }
+          setTestCompletionCounts(counts);
+        }
+      } else {
+        toast.info('Geen wijzigingen', {
+          description: 'Er zijn geen wijzigingen aangebracht om op te slaan.',
+        });
+      }
     } catch (error) {
       console.error('Error saving data:', error);
       toast.error('Opslaan mislukt', {
