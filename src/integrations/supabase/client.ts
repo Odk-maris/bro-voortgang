@@ -28,8 +28,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Create a function to set auth header using a custom approach
 export const applyAuth = async (username: string, password: string) => {
-  // Instead of accessing the protected 'rest' property,
-  // let's store the credentials in localStorage for re-use
+  // Store the credentials in localStorage for re-use
   localStorage.setItem('auth_credentials', JSON.stringify({ username, password }));
   
   // Return true to indicate successful credential storage

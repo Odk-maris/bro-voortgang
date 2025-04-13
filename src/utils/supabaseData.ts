@@ -1,4 +1,3 @@
-
 import { supabase, User, GroupEnum, CategoryEnum, RoleEnum } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -174,7 +173,7 @@ export const getStudentsByRole = async (role: RoleEnum = 'student') => {
   }
 };
 
-// Add a new grade - Fixed to properly handle authentication
+// Add a new grade - Updated to work with RLS
 export const addGrade = async (studentId: string | number, subjectId: number, grade: number, teacherId: string | number, feedback: string = '') => {
   try {
     const stringStudentId = convertIdToString(studentId);
@@ -187,10 +186,6 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
       teacher_id: stringTeacherId, 
       feedback: feedback || null 
     });
-    
-    // Get current Supabase session status before operation
-    const { data: sessionData } = await supabase.auth.getSession();
-    console.log('Current Supabase session before adding grade:', sessionData);
     
     const { data, error } = await supabase
       .from('grades')
@@ -218,7 +213,7 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
   }
 };
 
-// Add test completion - Fixed to properly handle authentication
+// Add test completion - Updated to work with RLS
 export const addTestCompletion = async (studentId: string | number, testId: number, completed: boolean = true) => {
   try {
     const stringStudentId = convertIdToString(studentId);
@@ -227,10 +222,6 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
       test_id: testId, 
       completed 
     });
-    
-    // Get current Supabase session status before operation
-    const { data: sessionData } = await supabase.auth.getSession();
-    console.log('Current Supabase session before adding test completion:', sessionData);
     
     // First check if there's already a completion
     const { data: existingData, error: fetchError } = await supabase
@@ -288,7 +279,7 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
   }
 };
 
-// Add category feedback - Fixed to properly handle authentication
+// Add category feedback - Updated to work with RLS
 export const addCategoryFeedback = async (studentId: string | number, category: CategoryEnum, feedback: string, teacherId: string | number) => {
   if (!feedback.trim()) {
     console.log('Skipping empty feedback submission');
@@ -305,10 +296,6 @@ export const addCategoryFeedback = async (studentId: string | number, category: 
       feedback, 
       teacher_id: stringTeacherId 
     });
-    
-    // Get current Supabase session status before operation
-    const { data: sessionData } = await supabase.auth.getSession();
-    console.log('Current Supabase session before adding category feedback:', sessionData);
     
     const { data, error } = await supabase
       .from('category_feedback')
