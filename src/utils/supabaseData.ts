@@ -364,10 +364,6 @@ export const updateSubjectActiveStatus = async (subjectId: number, active: boole
   try {
     console.log(`Updating subject ${subjectId} active status to ${active}`);
     
-    // Get current Supabase session status before operation
-    const { data: sessionData } = await supabase.auth.getSession();
-    console.log('Current Supabase session before updating subject:', sessionData);
-    
     const { data, error } = await supabase
       .from('subjects')
       .update({ active: active })
