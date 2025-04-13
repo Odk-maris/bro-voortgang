@@ -174,29 +174,35 @@ export const getStudentsByRole = async (role: RoleEnum = 'student') => {
   }
 };
 
-// Add a new grade - Fixed to work properly with the Supabase RLS
+// Add a new grade - Fixed to properly handle authentication
 export const addGrade = async (studentId: string | number, subjectId: number, grade: number, teacherId: string | number, feedback: string = '') => {
   try {
+    const stringStudentId = convertIdToString(studentId);
+    const stringTeacherId = convertIdToString(teacherId);
+    
     console.log('Adding grade with parameters:', { 
-      student_id: convertIdToString(studentId), 
+      student_id: stringStudentId, 
       subject_id: subjectId, 
       grade, 
-      teacher_id: convertIdToString(teacherId), 
+      teacher_id: stringTeacherId, 
       feedback: feedback || null 
     });
+    
+    // Get current Supabase session status before operation
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('Current Supabase session before adding grade:', sessionData);
     
     const { data, error } = await supabase
       .from('grades')
       .insert({
-        student_id: convertIdToString(studentId),
+        student_id: stringStudentId,
         subject_id: subjectId,
         grade: grade,
-        teacher_id: convertIdToString(teacherId),
+        teacher_id: stringTeacherId,
         feedback: feedback || null,
         date: new Date().toISOString().split('T')[0]
       })
-      .select()
-      .maybeSingle();
+      .select();
     
     if (error) {
       console.error('Supabase error adding grade:', error);
@@ -212,7 +218,7 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
   }
 };
 
-// Add test completion - Fixed to work properly with RLS
+// Add test completion - Fixed to properly handle authentication
 export const addTestCompletion = async (studentId: string | number, testId: number, completed: boolean = true) => {
   try {
     const stringStudentId = convertIdToString(studentId);
@@ -221,6 +227,10 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
       test_id: testId, 
       completed 
     });
+    
+    // Get current Supabase session status before operation
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('Current Supabase session before adding test completion:', sessionData);
     
     // First check if there's already a completion
     const { data: existingData, error: fetchError } = await supabase
@@ -278,7 +288,7 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
   }
 };
 
-// Add category feedback - Fixed to work properly with RLS
+// Add category feedback - Fixed to properly handle authentication
 export const addCategoryFeedback = async (studentId: string | number, category: CategoryEnum, feedback: string, teacherId: string | number) => {
   if (!feedback.trim()) {
     console.log('Skipping empty feedback submission');
@@ -296,6 +306,10 @@ export const addCategoryFeedback = async (studentId: string | number, category: 
       teacher_id: stringTeacherId 
     });
     
+    // Get current Supabase session status before operation
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('Current Supabase session before adding category feedback:', sessionData);
+    
     const { data, error } = await supabase
       .from('category_feedback')
       .insert({
@@ -305,8 +319,7 @@ export const addCategoryFeedback = async (studentId: string | number, category: 
         teacher_id: stringTeacherId,
         date: new Date().toISOString().split('T')[0]
       })
-      .select()
-      .maybeSingle();
+      .select();
       
     if (error) {
       console.error('Error adding category feedback:', error);
@@ -364,12 +377,15 @@ export const updateSubjectActiveStatus = async (subjectId: number, active: boole
   try {
     console.log(`Updating subject ${subjectId} active status to ${active}`);
     
+    // Get current Supabase session status before operation
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log('Current Supabase session before updating subject:', sessionData);
+    
     const { data, error } = await supabase
       .from('subjects')
       .update({ active: active })
       .eq('id', subjectId)
-      .select()
-      .maybeSingle();
+      .select();
       
     if (error) {
       console.error('Error updating subject status:', error);

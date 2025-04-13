@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -50,6 +50,15 @@ const TeacherDashboard = () => {
   });
   const [tests, setTests] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [saveStatus, setSaveStatus] = useState<{
+    grades: Record<number, boolean>,
+    tests: Record<number, boolean>,
+    feedback: Record<string, boolean>
+  }>({
+    grades: {},
+    tests: {},
+    feedback: {}
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -150,6 +159,54 @@ const TeacherDashboard = () => {
     }));
   };
 
+  // Individual save functions for better error handling
+  const saveGrade = useCallback(async (subjectId: number, grade: number, userId: string) => {
+    try {
+      console.log(`Saving grade for subject ${subjectId}: ${grade}`);
+      const success = await addGrade(selectedStudentId, subjectId, grade, userId, '');
+      
+      if (success) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error(`Error saving grade for subject ${subjectId}:`, error);
+      return false;
+    }
+  }, [selectedStudentId]);
+
+  const saveTest = useCallback(async (testId: number, isCompleted: boolean) => {
+    try {
+      console.log(`Saving test completion for test ${testId}`);
+      const success = await addTestCompletion(selectedStudentId, testId, isCompleted);
+      
+      if (success) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error(`Error saving test completion for test ${testId}:`, error);
+      return false;
+    }
+  }, [selectedStudentId]);
+
+  const saveFeedback = useCallback(async (category: CategoryEnum, feedback: string, userId: string) => {
+    if (!feedback.trim()) return true; // Skip empty feedback
+    
+    try {
+      console.log(`Saving feedback for category ${category}`);
+      const success = await addCategoryFeedback(selectedStudentId, category, feedback, userId);
+      
+      if (success) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error(`Error saving feedback for category ${category}:`, error);
+      return false;
+    }
+  }, [selectedStudentId]);
+
   const handleSaveGrades = async () => {
     if (!selectedStudentId) {
       toast.error('Selecteer een cursist');
@@ -173,11 +230,27 @@ const TeacherDashboard = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       console.log('Current Supabase session:', sessionData);
       
-      // Save grades
+      // Reset save status
+      setSaveStatus({
+        grades: {},
+        tests: {},
+        feedback: {}
+      });
+      
+      // Save each grade individually for better error tracking
       let gradesSaved = 0;
       for (const [subjectId, grade] of Object.entries(selectedGrades)) {
-        console.log(`Saving grade for subject ${subjectId}: ${grade}`);
-        const success = await addGrade(selectedStudentId, parseInt(subjectId), grade, user.id, '');
+        const subjectIdNum = parseInt(subjectId);
+        const success = await saveGrade(subjectIdNum, grade, user.id);
+        
+        setSaveStatus(prev => ({
+          ...prev,
+          grades: {
+            ...prev.grades,
+            [subjectIdNum]: success
+          }
+        }));
+        
         if (success) {
           gradesSaved++;
         }
@@ -187,8 +260,16 @@ const TeacherDashboard = () => {
       let feedbackSaved = 0;
       for (const [category, feedback] of Object.entries(categoryFeedback)) {
         if (feedback.trim()) {
-          console.log(`Saving feedback for category ${category}`);
-          const success = await addCategoryFeedback(selectedStudentId, category as CategoryEnum, feedback, user.id);
+          const success = await saveFeedback(category as CategoryEnum, feedback, user.id);
+          
+          setSaveStatus(prev => ({
+            ...prev,
+            feedback: {
+              ...prev.feedback,
+              [category]: success
+            }
+          }));
+          
           if (success) {
             feedbackSaved++;
           }
@@ -199,8 +280,17 @@ const TeacherDashboard = () => {
       let testsSaved = 0;
       for (const [testId, isCompleted] of Object.entries(selectedTests)) {
         if (isCompleted) {
-          console.log(`Saving test completion for test ${testId}`);
-          const success = await addTestCompletion(selectedStudentId, parseInt(testId), true);
+          const testIdNum = parseInt(testId);
+          const success = await saveTest(testIdNum, true);
+          
+          setSaveStatus(prev => ({
+            ...prev,
+            tests: {
+              ...prev.tests,
+              [testIdNum]: success
+            }
+          }));
+          
           if (success) {
             testsSaved++;
           }
@@ -213,14 +303,30 @@ const TeacherDashboard = () => {
           description: `${gradesSaved} beoordelingen, ${feedbackSaved} feedback en ${testsSaved} bruggen zijn bijgewerkt.`,
         });
         
-        // Reset the form
-        setSelectedGrades({});
-        
-        const resetTests: Record<number, boolean> = {};
-        tests.forEach(test => {
-          resetTests[test.id] = false;
+        // Reset the form for successfully saved items
+        const newSelectedGrades = { ...selectedGrades };
+        Object.entries(saveStatus.grades).forEach(([subjectId, success]) => {
+          if (success) {
+            delete newSelectedGrades[parseInt(subjectId)];
+          }
         });
-        setSelectedTests(resetTests);
+        setSelectedGrades(newSelectedGrades);
+        
+        const newSelectedTests = { ...selectedTests };
+        Object.entries(saveStatus.tests).forEach(([testId, success]) => {
+          if (success) {
+            newSelectedTests[parseInt(testId)] = false;
+          }
+        });
+        setSelectedTests(newSelectedTests);
+        
+        const newCategoryFeedback = { ...categoryFeedback };
+        Object.entries(saveStatus.feedback).forEach(([category, success]) => {
+          if (success) {
+            newCategoryFeedback[category] = '';
+          }
+        });
+        setCategoryFeedback(newCategoryFeedback);
         
         // Update test completion counts
         if (selectedStudentId) {

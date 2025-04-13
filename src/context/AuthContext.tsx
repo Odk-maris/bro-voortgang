@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { supabase, User, RoleEnum, GroupEnum } from '@/integrations/supabase/client';
+import { supabase, User, RoleEnum, GroupEnum, applyAuth } from '@/integrations/supabase/client';
 
 // Custom interface that matches our app's user model
 interface AppUser {
@@ -48,6 +48,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               role: data.role,
               ...(data.role === 'student' && { groep: data.groep })
             });
+            
+            // Apply authentication for the stored user
+            if (data.username && data.password) {
+              await applyAuth(data.username, data.password);
+            }
           } else {
             localStorage.removeItem('user');
           }
@@ -65,6 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     
     try {
+      // Apply auth headers first
+      await applyAuth(username, password);
+      
       // Query Supabase for the user with matching credentials
       const { data, error } = await supabase
         .from('users')
@@ -82,7 +90,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ...(data.role === 'student' && { groep: data.groep })
         };
         
-        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('user', JSON.stringify({
+          ...userData,
+          password: password // Store password for re-authentication (not secure but required for this setup)
+        }));
+        
         setUser(userData);
         
         toast.success('Login successful', {

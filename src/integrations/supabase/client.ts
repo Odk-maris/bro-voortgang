@@ -26,6 +26,12 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
+// Create a function to set a custom auth header using username/password
+export const applyAuth = async (username: string, password: string) => {
+  // Set custom auth header
+  supabase.rest.headers.append('Authorization', `Basic ${btoa(`${username}:${password}`)}`);
+};
+
 // Type helpers for tables
 export type Tables = Database['public']['Tables'];
 export type GroupEnum = Database['public']['Enums']['group_enum'];
