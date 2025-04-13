@@ -177,7 +177,7 @@ export const getStudentsByRole = async (role: RoleEnum = 'student') => {
   }
 };
 
-// Add a new grade - Fixed to handle RLS issues
+// Add a new grade - Improved to work with RLS
 export const addGrade = async (studentId: string | number, subjectId: number, grade: number, teacherId: string | number, feedback: string = '') => {
   try {
     console.log('Adding grade with parameters:', { 
@@ -188,7 +188,6 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
       feedback: feedback || null 
     });
     
-    // Use upsert to handle potential RLS issues or duplicates
     const { data, error } = await supabase
       .from('grades')
       .insert({
@@ -196,20 +195,13 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
         subject_id: subjectId,
         grade: grade,
         teacher_id: convertIdToString(teacherId),
-        feedback: feedback || null
-      })
-      .select();
+        feedback: feedback || null,
+        date: new Date().toISOString().split('T')[0]
+      });
     
     if (error) {
       console.error('Supabase error adding grade:', error);
-      // Try direct insert as fallback
-      if (error.code === '42501') {
-        console.log('Attempting insert with RLS bypass option');
-        // Handle RLS issue - different approach might be needed here
-        throw error;
-      } else {
-        throw error;
-      }
+      throw error;
     }
     
     console.log('Grade added successfully:', data);
@@ -221,7 +213,7 @@ export const addGrade = async (studentId: string | number, subjectId: number, gr
   }
 };
 
-// Add test completion - Fixed to handle RLS issues
+// Add test completion - Improved to work with RLS
 export const addTestCompletion = async (studentId: string | number, testId: number, completed: boolean = true) => {
   try {
     console.log('Adding test completion with parameters:', { 
@@ -242,7 +234,10 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
       console.log('Test completion already exists, updating instead');
       const { error } = await supabase
         .from('test_completions')
-        .update({ completed: completed })
+        .update({ 
+          completed: completed,
+          date: new Date().toISOString().split('T')[0] 
+        })
         .eq('id', existingData[0].id);
       
       if (error) {
@@ -275,7 +270,7 @@ export const addTestCompletion = async (studentId: string | number, testId: numb
   }
 };
 
-// Add category feedback - Fixed to handle RLS issues
+// Add category feedback - Improved to work with RLS
 export const addCategoryFeedback = async (studentId: string | number, category: CategoryEnum, feedback: string, teacherId: string | number) => {
   if (!feedback.trim()) {
     console.log('Skipping empty feedback submission');
@@ -351,15 +346,22 @@ export const getStudentCategoryFeedback = async (studentId: string | number, cat
   }
 };
 
-// Update subject active status
+// Update subject active status - Improved for RLS
 export const updateSubjectActiveStatus = async (subjectId: number, active: boolean) => {
   try {
+    console.log(`Updating subject ${subjectId} active status to ${active}`);
+    
     const { error } = await supabase
       .from('subjects')
       .update({ active: active })
       .eq('id', subjectId);
       
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error updating subject status:', error);
+      throw error;
+    }
+    
+    console.log(`Subject ${subjectId} active status updated successfully`);
     return true;
   } catch (error) {
     console.error('Error updating subject status:', error);

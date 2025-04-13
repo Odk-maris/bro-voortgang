@@ -14,8 +14,10 @@ import {
 import { toast } from 'sonner';
 import UserManagement from '@/components/UserManagement';
 import { CategoryEnum } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 const AdminPanel = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<CategoryEnum>(CATEGORIES.VERRICHTINGEN);
   const [refreshKey, setRefreshKey] = useState(0);
   const [subjects, setSubjects] = useState({
@@ -24,6 +26,7 @@ const AdminPanel = () => {
     [CATEGORIES.STUURKUNST]: []
   });
   const [loading, setLoading] = useState(true);
+  const [togglesInProgress, setTogglesInProgress] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -50,15 +53,66 @@ const AdminPanel = () => {
   }, [refreshKey]);
 
   const handleSubjectToggle = async (subjectId: number, active: boolean) => {
-    const success = await updateSubjectActiveStatus(subjectId, active);
+    // Prevent multiple simultaneous toggles for the same subject
+    if (togglesInProgress[subjectId]) return;
     
-    if (success) {
-      toast.success(`Subject status updated`, {
-        description: `Subject has been ${active ? 'enabled' : 'disabled'} for grading.`,
+    // Mark this subject as being toggled
+    setTogglesInProgress(prev => ({ ...prev, [subjectId]: true }));
+    
+    console.log(`Toggling subject ${subjectId} to ${active ? 'active' : 'inactive'}`);
+    
+    try {
+      // Optimistically update the UI
+      setSubjects(prevSubjects => {
+        const updatedSubjects = { ...prevSubjects };
+        
+        Object.keys(updatedSubjects).forEach(category => {
+          const categoryKey = category as CategoryEnum;
+          updatedSubjects[categoryKey] = updatedSubjects[categoryKey].map(subject => 
+            subject.id === subjectId ? { ...subject, active } : subject
+          );
+        });
+        
+        return updatedSubjects;
       });
       
-      // Force a re-render to refresh the data
+      // Call the API to update the subject status
+      const success = await updateSubjectActiveStatus(subjectId, active);
+      
+      if (success) {
+        toast.success(`Subject status updated`, {
+          description: `Subject has been ${active ? 'enabled' : 'disabled'} for grading.`,
+        });
+      } else {
+        // Revert the UI if the API call failed
+        toast.error('Failed to update subject status');
+        setSubjects(prevSubjects => {
+          const updatedSubjects = { ...prevSubjects };
+          
+          Object.keys(updatedSubjects).forEach(category => {
+            const categoryKey = category as CategoryEnum;
+            updatedSubjects[categoryKey] = updatedSubjects[categoryKey].map(subject => 
+              subject.id === subjectId ? { ...subject, active: !active } : subject
+            );
+          });
+          
+          return updatedSubjects;
+        });
+        
+        // Force a refresh to ensure data is consistent
+        setRefreshKey(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error(`Error toggling subject ${subjectId}:`, error);
+      toast.error('An error occurred while updating the subject');
       setRefreshKey(prev => prev + 1);
+    } finally {
+      // Clear the in-progress flag for this subject
+      setTogglesInProgress(prev => {
+        const updated = { ...prev };
+        delete updated[subjectId];
+        return updated;
+      });
     }
   };
 
@@ -122,6 +176,7 @@ const AdminPanel = () => {
                               <Switch
                                 id={`subject-${subject.id}`}
                                 checked={subject.active}
+                                disabled={togglesInProgress[subject.id]}
                                 onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
                               />
                               <Label htmlFor={`subject-${subject.id}`}>
@@ -147,6 +202,7 @@ const AdminPanel = () => {
                               <Switch
                                 id={`subject-${subject.id}`}
                                 checked={subject.active}
+                                disabled={togglesInProgress[subject.id]}
                                 onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
                               />
                               <Label htmlFor={`subject-${subject.id}`}>
@@ -172,6 +228,7 @@ const AdminPanel = () => {
                               <Switch
                                 id={`subject-${subject.id}`}
                                 checked={subject.active}
+                                disabled={togglesInProgress[subject.id]}
                                 onCheckedChange={(checked) => handleSubjectToggle(subject.id, checked)}
                               />
                               <Label htmlFor={`subject-${subject.id}`}>

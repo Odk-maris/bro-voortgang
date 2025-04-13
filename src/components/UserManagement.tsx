@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Pencil, Trash, UserPlus } from 'lucide-react';
 import { supabase, User, RoleEnum, GroupEnum } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 const GROUPS = {
   DIZA: 'diza' as GroupEnum,
@@ -17,11 +17,13 @@ const GROUPS = {
 };
 
 const UserManagement = () => {
+  const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [newUser, setNewUser] = useState({
     username: '',
@@ -44,15 +46,21 @@ const UserManagement = () => {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      setIsLoading(true);
       try {
+        console.log('Fetching users...');
         const { data, error } = await supabase.from('users').select('*');
         if (error) {
+          console.error('Error fetching users:', error);
           throw error;
         }
+        console.log('Users fetched:', data?.length || 0);
         setUsers(data || []);
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('Failed to load users');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -66,6 +74,7 @@ const UserManagement = () => {
     }
     
     try {
+      console.log('Adding new user:', newUser.username);
       const { error } = await supabase.from('users').insert({
         username: newUser.username,
         name: newUser.name,
@@ -74,7 +83,10 @@ const UserManagement = () => {
         groep: newUser.role === 'student' ? newUser.groep : null
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding user:', error);
+        throw error;
+      }
       
       toast.success('Gebruiker succesvol toegevoegd');
       setIsAddOpen(false);
@@ -99,6 +111,7 @@ const UserManagement = () => {
     }
     
     try {
+      console.log('Updating user:', editUser.id);
       const updates: Partial<User> = {
         username: editUser.username,
         name: editUser.name,
@@ -115,7 +128,10 @@ const UserManagement = () => {
         .update(updates)
         .eq('id', editUser.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating user:', error);
+        throw error;
+      }
       
       toast.success('Gebruiker succesvol bijgewerkt');
       setIsEditOpen(false);
@@ -129,12 +145,16 @@ const UserManagement = () => {
   const handleDeleteUser = async () => {
     if (userToDelete) {
       try {
+        console.log('Deleting user:', userToDelete);
         const { error } = await supabase
           .from('users')
           .delete()
           .eq('id', userToDelete);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error deleting user:', error);
+          throw error;
+        }
         
         toast.success('Gebruiker succesvol verwijderd');
         setIsDeleteOpen(false);
@@ -187,6 +207,14 @@ const UserManagement = () => {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="h-8 w-8 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6" key={refreshKey}>
