@@ -372,14 +372,20 @@ export const updateSubjectActiveStatus = async (subjectId: number, active: boole
       
     if (error) {
       console.error('Error updating subject status:', error);
-      throw error;
+      toast.error('Failed to update subject status', {
+        description: error.message
+      });
+      return false;
     }
     
     console.log(`Subject ${subjectId} active status updated successfully:`, data);
+    toast.success('Subject status updated', {
+      description: `Subject has been ${active ? 'enabled' : 'disabled'} for grading.`
+    });
     return true;
   } catch (error) {
-    console.error('Error updating subject status:', error);
-    toast.error('Failed to update subject status: ' + (error as Error).message);
+    console.error('Unexpected error updating subject status:', error);
+    toast.error('An unexpected error occurred while updating subject status');
     return false;
   }
 };
