@@ -53,17 +53,22 @@ const TeacherHistory = () => {
         const fetchedStudents = await getStudentsByRole('student');
         setStudents(fetchedStudents);
         
+        const sortSubjects = (subjects: any[]) => {
+          return subjects.sort((a, b) => a.id - b.id);
+        };
+        
         const fetchedVerrichtingenSubjects = await getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
-        setVerrichtingenSubjects(fetchedVerrichtingenSubjects.filter(subject => subject.active));
+        setVerrichtingenSubjects(sortSubjects(fetchedVerrichtingenSubjects.filter(subject => subject.active)));
         
         const fetchedRoeitechniekSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
-        setRoeitechniekSubjects(fetchedRoeitechniekSubjects.filter(subject => subject.active));
+        setRoeitechniekSubjects(sortSubjects(fetchedRoeitechniekSubjects.filter(subject => subject.active)));
         
         const fetchedStuurkunstSubjects = await getSubjectsByCategory(CATEGORIES.STUURKUNST);
-        setStuurkunstSubjects(fetchedStuurkunstSubjects.filter(subject => subject.active));
+        setStuurkunstSubjects(sortSubjects(fetchedStuurkunstSubjects.filter(subject => subject.active)));
         
         const allTests = await getAllTests();
-        setTests(allTests);
+        const sortedTests = allTests.sort((a, b) => a.id - b.id);
+        setTests(sortedTests);
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {

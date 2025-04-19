@@ -36,10 +36,15 @@ const AdminPanel = () => {
         const roeitechniekSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
         const stuurkunstSubjects = await getSubjectsByCategory(CATEGORIES.STUURKUNST);
         
+        // Sort subjects by ID to maintain consistent order
+        const sortSubjects = (subjects: any[]) => {
+          return subjects.sort((a, b) => a.id - b.id);
+        };
+        
         setSubjects({
-          [CATEGORIES.VERRICHTINGEN]: verrichtingenSubjects,
-          [CATEGORIES.ROEITECHNIEK]: roeitechniekSubjects,
-          [CATEGORIES.STUURKUNST]: stuurkunstSubjects
+          [CATEGORIES.VERRICHTINGEN]: sortSubjects(verrichtingenSubjects),
+          [CATEGORIES.ROEITECHNIEK]: sortSubjects(roeitechniekSubjects),
+          [CATEGORIES.STUURKUNST]: sortSubjects(stuurkunstSubjects)
         });
       } catch (error) {
         console.error('Error fetching subjects:', error);
@@ -79,13 +84,8 @@ const AdminPanel = () => {
       // Call the API to update the subject status
       const success = await updateSubjectActiveStatus(subjectId, active);
       
-      if (success) {
-        toast.success(`Subject status updated`, {
-          description: `Subject has been ${active ? 'enabled' : 'disabled'} for grading.`,
-        });
-      } else {
+      if (!success) {
         // Revert the UI if the API call failed
-        toast.error('Failed to update subject status');
         setSubjects(prevSubjects => {
           const updatedSubjects = { ...prevSubjects };
           

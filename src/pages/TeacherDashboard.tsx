@@ -72,15 +72,22 @@ const TeacherDashboard = () => {
         const roeitechniekSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
         const stuurkunstSubjects = await getSubjectsByCategory(CATEGORIES.STUURKUNST);
         
+        // Sort subjects by ID to maintain consistent order
+        const sortSubjects = (subjects: any[]) => {
+          return subjects.sort((a, b) => a.id - b.id);
+        };
+        
         setSubjects({
-          [CATEGORIES.VERRICHTINGEN]: verrichtingenSubjects.filter(subject => subject.active),
-          [CATEGORIES.ROEITECHNIEK]: roeitechniekSubjects.filter(subject => subject.active),
-          [CATEGORIES.STUURKUNST]: stuurkunstSubjects.filter(subject => subject.active)
+          [CATEGORIES.VERRICHTINGEN]: sortSubjects(verrichtingenSubjects.filter(subject => subject.active)),
+          [CATEGORIES.ROEITECHNIEK]: sortSubjects(roeitechniekSubjects.filter(subject => subject.active)),
+          [CATEGORIES.STUURKUNST]: sortSubjects(stuurkunstSubjects.filter(subject => subject.active))
         });
 
         const allTests = await getAllTests();
-        setTests(allTests);
-        console.log('Initial data loaded successfully', { students: fetchedStudents.length, tests: allTests.length });
+        // Sort tests by ID for consistency
+        const sortedTests = allTests.sort((a, b) => a.id - b.id);
+        setTests(sortedTests);
+        console.log('Initial data loaded successfully', { students: fetchedStudents.length, tests: sortedTests.length });
       } catch (error) {
         console.error('Error loading initial data:', error);
         toast.error('Failed to load data');
