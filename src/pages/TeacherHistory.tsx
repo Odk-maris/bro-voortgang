@@ -51,7 +51,11 @@ const TeacherHistory = () => {
       setLoading(true);
       try {
         const fetchedStudents = await getStudentsByRole('student');
-        setStudents(fetchedStudents);
+        // Sort students alphabetically by name
+        const sortedStudents = fetchedStudents.sort((a, b) => 
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        );
+        setStudents(sortedStudents);
         
         const sortSubjects = (subjects: any[]) => {
           return subjects.sort((a, b) => a.id - b.id);

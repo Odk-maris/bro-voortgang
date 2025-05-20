@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -66,7 +65,11 @@ const TeacherDashboard = () => {
       try {
         console.log('Loading initial data');
         const fetchedStudents = await getStudentsByRole('student');
-        setStudents(fetchedStudents);
+        // Sort students alphabetically by name
+        const sortedStudents = fetchedStudents.sort((a, b) => 
+          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+        );
+        setStudents(sortedStudents);
 
         const verrichtingenSubjects = await getSubjectsByCategory(CATEGORIES.VERRICHTINGEN);
         const roeitechniekSubjects = await getSubjectsByCategory(CATEGORIES.ROEITECHNIEK);
