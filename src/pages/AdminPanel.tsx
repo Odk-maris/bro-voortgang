@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,6 +28,12 @@ const AdminPanel = () => {
   const [togglesInProgress, setTogglesInProgress] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
+    // Check if user is admin
+    if (user && user.role !== 'admin') {
+      toast.error('Je hebt geen toegang tot deze pagina');
+      return;
+    }
+
     const fetchSubjects = async () => {
       setLoading(true);
       try {
@@ -55,7 +60,7 @@ const AdminPanel = () => {
     };
 
     fetchSubjects();
-  }, [refreshKey]);
+  }, [refreshKey, user]);
 
   const handleSubjectToggle = async (subjectId: number, active: boolean) => {
     // Prevent multiple simultaneous toggles for the same subject
@@ -251,7 +256,7 @@ const AdminPanel = () => {
                 <CardTitle>User Management</CardTitle>
               </CardHeader>
               <CardContent>
-                <UserManagement />
+                <UserManagement currentUser={user} />
               </CardContent>
             </Card>
           </TabsContent>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -16,8 +17,11 @@ const GROUPS = {
   NONE: 'none' as GroupEnum
 };
 
-const UserManagement = () => {
-  const { user } = useAuth();
+interface UserManagementProps {
+  currentUser: User | null;
+}
+
+const UserManagement = ({ currentUser }: UserManagementProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -45,6 +49,12 @@ const UserManagement = () => {
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
   useEffect(() => {
+    // Ensure current user is admin before fetching data
+    if (!currentUser || currentUser.role !== 'admin') {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
@@ -65,7 +75,7 @@ const UserManagement = () => {
     };
 
     fetchUsers();
-  }, [refreshKey]);
+  }, [refreshKey, currentUser]);
   
   const handleAddUser = async () => {
     if (!newUser.username || !newUser.name || !newUser.password) {
@@ -75,6 +85,13 @@ const UserManagement = () => {
     
     try {
       console.log('Adding new user:', newUser.username);
+      
+      // Make sure we have an admin user
+      if (!currentUser || currentUser.role !== 'admin') {
+        toast.error('Je hebt geen rechten om gebruikers toe te voegen');
+        return;
+      }
+      
       const { error } = await supabase.from('users').insert({
         username: newUser.username,
         name: newUser.name,
@@ -112,6 +129,13 @@ const UserManagement = () => {
     
     try {
       console.log('Updating user:', editUser.id);
+      
+      // Make sure we have an admin user
+      if (!currentUser || currentUser.role !== 'admin') {
+        toast.error('Je hebt geen rechten om gebruikers te wijzigen');
+        return;
+      }
+      
       const updates: Partial<User> = {
         username: editUser.username,
         name: editUser.name,
@@ -146,6 +170,13 @@ const UserManagement = () => {
     if (userToDelete) {
       try {
         console.log('Deleting user:', userToDelete);
+        
+        // Make sure we have an admin user
+        if (!currentUser || currentUser.role !== 'admin') {
+          toast.error('Je hebt geen rechten om gebruikers te verwijderen');
+          return;
+        }
+        
         const { error } = await supabase
           .from('users')
           .delete()
@@ -212,6 +243,15 @@ const UserManagement = () => {
     return (
       <div className="flex justify-center py-8">
         <div className="h-8 w-8 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+  
+  if (!currentUser || currentUser.role !== 'admin') {
+    return (
+      <div className="p-4 border rounded-md bg-amber-50 text-amber-800">
+        <h3 className="font-medium">Toegang geweigerd</h3>
+        <p>Je hebt geen toegang tot de gebruikersbeheer functionaliteit.</p>
       </div>
     );
   }
