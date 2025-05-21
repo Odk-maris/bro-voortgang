@@ -18,8 +18,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
   global: {
     headers: {
-      'X-Client-Info': 'lovable',
-      // We'll add auth headers when needed through interceptors
+      'X-Client-Info': 'lovable'
     }
   },
   db: {
@@ -27,32 +26,23 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Create a function to set auth header using current user session (for JWT)
+// Create a function to set auth header using a custom approach
 export const applyAuth = async (username: string, password: string) => {
-  try {
-    // Store the credentials in localStorage for re-use
-    localStorage.setItem('auth_credentials', JSON.stringify({ username, password }));
-    
-    // Return true to indicate successful credential storage
-    return true;
-  } catch (error) {
-    console.error('Error storing auth credentials:', error);
-    return false;
-  }
+  // Store the credentials in localStorage for re-use
+  localStorage.setItem('auth_credentials', JSON.stringify({ username, password }));
+  
+  // Return true to indicate successful credential storage
+  return true;
 };
 
 // Function to get stored credentials and apply them to fetch calls if needed
 export const getAuthHeaders = () => {
-  try {
-    const storedCredentials = localStorage.getItem('auth_credentials');
-    if (storedCredentials) {
-      const { username, password } = JSON.parse(storedCredentials);
-      return {
-        Authorization: `Basic ${btoa(`${username}:${password}`)}`
-      };
-    }
-  } catch (error) {
-    console.error('Error retrieving auth credentials:', error);
+  const storedCredentials = localStorage.getItem('auth_credentials');
+  if (storedCredentials) {
+    const { username, password } = JSON.parse(storedCredentials);
+    return {
+      Authorization: `Basic ${btoa(`${username}:${password}`)}`
+    };
   }
   return {};
 };
