@@ -9,7 +9,7 @@ import {
   getStudentGrades, 
   getStudentTests,
   getStudentTestCompletionCount,
-  getStudentLatestCategoryFeedback,
+  getStudentCategoryFeedback,
   getUserById,
   CATEGORIES,
   getAllTests,
@@ -28,9 +28,9 @@ const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState<CategoryEnum>(CATEGORIES.VERRICHTINGEN);
   const [studentGrades, setStudentGrades] = useState<any[]>([]);
   const [studentTests, setStudentTests] = useState<any[]>([]);
-  const [verrichtingenFeedback, setVerrichtingenFeedback] = useState<any>(null);
-  const [roeitechniekFeedback, setRoeitechniekFeedback] = useState<any>(null);
-  const [stuurkunstFeedback, setStuurkunstFeedback] = useState<any>(null);
+  const [verrichtingenFeedback, setVerrichtingenFeedback] = useState<any[]>([]);
+  const [roeitechniekFeedback, setRoeitechniekFeedback] = useState<any[]>([]);
+  const [stuurkunstFeedback, setStuurkunstFeedback] = useState<any[]>([]);
   const [testCompletionCounts, setTestCompletionCounts] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [verrichtingenSubjects, setVerrichtingenSubjects] = useState<any[]>([]);
@@ -57,15 +57,15 @@ const StudentDashboard = () => {
         const tests = await getStudentTests(user.id);
         setStudentTests(tests);
 
-        // Load category feedback
-        const vFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.VERRICHTINGEN);
-        setVerrichtingenFeedback(vFeedback);
+        // Load category feedback - changed to get the last 5 feedback items
+        const vFeedback = await getStudentCategoryFeedback(user.id, CATEGORIES.VERRICHTINGEN);
+        setVerrichtingenFeedback(vFeedback.slice(0, 5)); // Limit to 5 most recent
 
-        const rFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.ROEITECHNIEK);
-        setRoeitechniekFeedback(rFeedback);
+        const rFeedback = await getStudentCategoryFeedback(user.id, CATEGORIES.ROEITECHNIEK);
+        setRoeitechniekFeedback(rFeedback.slice(0, 5)); // Limit to 5 most recent
         
-        const sFeedback = await getStudentLatestCategoryFeedback(user.id, CATEGORIES.STUURKUNST);
-        setStuurkunstFeedback(sFeedback);
+        const sFeedback = await getStudentCategoryFeedback(user.id, CATEGORIES.STUURKUNST);
+        setStuurkunstFeedback(sFeedback.slice(0, 5)); // Limit to 5 most recent
 
         // Load test completion counts
         const counts: Record<number, number> = {};
@@ -87,9 +87,9 @@ const StudentDashboard = () => {
         
         // Load teacher details for feedback
         const teacherIds = new Set<string>();
-        if (vFeedback?.teacher_id) teacherIds.add(vFeedback.teacher_id);
-        if (rFeedback?.teacher_id) teacherIds.add(rFeedback.teacher_id);
-        if (sFeedback?.teacher_id) teacherIds.add(sFeedback.teacher_id);
+        vFeedback.forEach(fb => { if (fb.teacher_id) teacherIds.add(fb.teacher_id); });
+        rFeedback.forEach(fb => { if (fb.teacher_id) teacherIds.add(fb.teacher_id); });
+        sFeedback.forEach(fb => { if (fb.teacher_id) teacherIds.add(fb.teacher_id); });
         
         const teacherDetails: Record<string, any> = {};
         for (const teacherId of teacherIds) {
@@ -117,8 +117,8 @@ const StudentDashboard = () => {
     grades.forEach(grade => counts[grade.grade as keyof typeof counts]++);
     return [
       { name: 'Verbetering nodig', value: counts[1], color: '#FECACA' },
-      { name: 'Voldoende', value: counts[2], color: '#FDE68A' },
-      { name: 'Uitstekend', value: counts[3], color: '#A7F3D0' },
+      { name: 'OK voor nu', value: counts[2], color: '#FDE68A' },
+      { name: 'Op koers', value: counts[3], color: '#A7F3D0' },
     ];
   };
 
@@ -162,7 +162,7 @@ const StudentDashboard = () => {
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-medium">Bruggen gedaan</CardTitle>
+              <CardTitle className="text-base font-medium">Bruggen afgetekend</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="text-3xl font-semibold mb-1">
@@ -192,17 +192,20 @@ const StudentDashboard = () => {
           </TabsList>
           
           <TabsContent value={CATEGORIES.VERRICHTINGEN} className="space-y-4">
-            {verrichtingenFeedback && (
+            {verrichtingenFeedback.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
                   <CardTitle className="text-base">Feedback - Verrichtingen</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <FeedbackItem 
-                    feedback={verrichtingenFeedback.feedback} 
-                    date={verrichtingenFeedback.date}
-                    teacherName={getTeacherName(verrichtingenFeedback.teacher_id)}
-                  />
+                <CardContent className="space-y-3">
+                  {verrichtingenFeedback.map((feedback) => (
+                    <FeedbackItem 
+                      key={feedback.id}
+                      feedback={feedback.feedback} 
+                      date={feedback.date}
+                      teacherName={getTeacherName(feedback.teacher_id)}
+                    />
+                  ))}
                 </CardContent>
               </Card>
             )}
@@ -219,17 +222,20 @@ const StudentDashboard = () => {
           </TabsContent>
           
           <TabsContent value={CATEGORIES.ROEITECHNIEK} className="space-y-4">
-            {roeitechniekFeedback && (
+            {roeitechniekFeedback.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
                   <CardTitle className="text-base">Feedback - Roeitechniek</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <FeedbackItem 
-                    feedback={roeitechniekFeedback.feedback} 
-                    date={roeitechniekFeedback.date}
-                    teacherName={getTeacherName(roeitechniekFeedback.teacher_id)}
-                  />
+                <CardContent className="space-y-3">
+                  {roeitechniekFeedback.map((feedback) => (
+                    <FeedbackItem 
+                      key={feedback.id}
+                      feedback={feedback.feedback} 
+                      date={feedback.date}
+                      teacherName={getTeacherName(feedback.teacher_id)}
+                    />
+                  ))}
                 </CardContent>
               </Card>
             )}
@@ -246,17 +252,20 @@ const StudentDashboard = () => {
           </TabsContent>
           
           <TabsContent value={CATEGORIES.STUURKUNST} className="space-y-4">
-            {stuurkunstFeedback && (
+            {stuurkunstFeedback.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
                   <CardTitle className="text-base">Feedback - Stuurkunst</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <FeedbackItem 
-                    feedback={stuurkunstFeedback.feedback} 
-                    date={stuurkunstFeedback.date}
-                    teacherName={getTeacherName(stuurkunstFeedback.teacher_id)}
-                  />
+                <CardContent className="space-y-3">
+                  {stuurkunstFeedback.map((feedback) => (
+                    <FeedbackItem 
+                      key={feedback.id}
+                      feedback={feedback.feedback} 
+                      date={feedback.date}
+                      teacherName={getTeacherName(feedback.teacher_id)}
+                    />
+                  ))}
                 </CardContent>
               </Card>
             )}
@@ -274,7 +283,7 @@ const StudentDashboard = () => {
         </Tabs>
         
         <div className="mt-6">
-          <h2 className="text-lg font-medium mb-4">Bruggen gedaan</h2>
+          <h2 className="text-lg font-medium mb-4">Bruggen afgetekend</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {allTests.map((test) => {
               const completionCount = testCompletionCounts[test.id] || 0;

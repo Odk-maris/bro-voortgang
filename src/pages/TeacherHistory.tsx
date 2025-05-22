@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -109,6 +108,24 @@ const TeacherHistory = () => {
         
         const completionCounts = await getStudentTestCompletionCounts(selectedStudentId);
         setTestCompletionCounts(completionCounts);
+        
+        // Load all teacher data for feedback display
+        const teacherIds = new Set<string>();
+        [...vFeedback, ...rFeedback, ...sFeedback].forEach(fb => {
+          if (fb.teacher_id) teacherIds.add(fb.teacher_id);
+        });
+        
+        for (const teacherId of teacherIds) {
+          if (!teacherCache[teacherId]) {
+            const teacher = await getUserById(teacherId);
+            if (teacher) {
+              setTeacherCache(prev => ({
+                ...prev,
+                [teacherId]: teacher
+              }));
+            }
+          }
+        }
       } catch (error) {
         console.error('Error loading student data:', error);
       } finally {
@@ -131,25 +148,8 @@ const TeacherHistory = () => {
   };
 
   // Get teacher names for feedback display
-  const getTeacherName = async (teacherId: string) => {
-    if (teacherCache[teacherId]) {
-      return teacherCache[teacherId].name;
-    }
-    
-    try {
-      const teacher = await getUserById(teacherId);
-      if (teacher) {
-        setTeacherCache(prev => ({
-          ...prev,
-          [teacherId]: teacher
-        }));
-        return teacher.name;
-      }
-    } catch (error) {
-      console.error('Error fetching teacher:', error);
-    }
-    
-    return 'Onbekende instructeur';
+  const getTeacherName = (teacherId: string) => {
+    return teacherCache[teacherId]?.name || 'Onbekende instructeur';
   };
 
   // Function to get the appropriate badge color for test completions
@@ -258,7 +258,7 @@ const TeacherHistory = () => {
                                         <FeedbackItem 
                                           feedback={feedback.feedback} 
                                           date={feedback.date} 
-                                          teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'}
+                                          teacherName={getTeacherName(feedback.teacher_id)}
                                         />
                                       </div>
                                     ))}
@@ -313,7 +313,7 @@ const TeacherHistory = () => {
                             </motion.div>
                           </TabsContent>
                         )}
-
+                        
                         {activeTab === CATEGORIES.ROEITECHNIEK && (
                           <TabsContent 
                             value={CATEGORIES.ROEITECHNIEK} 
@@ -335,7 +335,7 @@ const TeacherHistory = () => {
                                         <FeedbackItem 
                                           feedback={feedback.feedback} 
                                           date={feedback.date} 
-                                          teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'} 
+                                          teacherName={getTeacherName(feedback.teacher_id)} 
                                         />
                                       </div>
                                     ))}
@@ -412,7 +412,7 @@ const TeacherHistory = () => {
                                         <FeedbackItem 
                                           feedback={feedback.feedback} 
                                           date={feedback.date} 
-                                          teacherName={teacherCache[feedback.teacher_id]?.name || 'Instructeur'} 
+                                          teacherName={getTeacherName(feedback.teacher_id)} 
                                         />
                                       </div>
                                     ))}
