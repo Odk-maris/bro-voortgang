@@ -121,6 +121,13 @@ const StudentDashboard = () => {
       { name: 'Op koers', value: counts[3], color: '#A7F3D0' },
     ];
   };
+  
+  // Helper function to get the appropriate color for test completions
+  const getTestCompletionColor = (count: number) => {
+    if (count >= 2) return 'bg-green-100 text-green-800 border-green-200';
+    if (count === 1) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    return 'bg-gray-100 text-gray-500 border-gray-200';
+  };
 
   const gradeDistribution = countGradesByValue(studentGrades);
   const totalTestCompletions = studentTests.filter(test => test.completed).length;
@@ -287,12 +294,16 @@ const StudentDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {allTests.map((test) => {
               const completionCount = testCompletionCounts[test.id] || 0;
+              // Set color based on completion count
+              const cardClass = completionCount >= 2 ? 'border-green-100 bg-green-50/50' : 
+                               completionCount === 1 ? 'border-yellow-100 bg-yellow-50/50' : '';
+              
               return (
-                <Card key={test.id} className={`transition-colors ${completionCount > 0 ? 'border-green-100 bg-green-50/50' : ''}`}>
+                <Card key={test.id} className={`transition-colors ${cardClass}`}>
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {completionCount > 0 ? (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        <CheckCircle2 className={`h-5 w-5 ${completionCount >= 2 ? 'text-green-500' : 'text-yellow-500'}`} />
                       ) : (
                         <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
                       )}
@@ -308,7 +319,7 @@ const StudentDashboard = () => {
                       </div>
                     </div>
                     {completionCount > 0 && (
-                      <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                      <Badge variant="outline" className={getTestCompletionColor(completionCount)}>
                         {completionCount} {completionCount === 1 ? 'keer' : 'keer'}
                       </Badge>
                     )}
