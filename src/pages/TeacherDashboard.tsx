@@ -509,7 +509,7 @@ const TeacherDashboard = () => {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Bruggen gedaan</CardTitle>
+                    <CardTitle>Bruggen afgetekend</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">

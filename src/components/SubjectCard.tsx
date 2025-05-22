@@ -10,7 +10,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import TestProgressBar from './TestProgressBar';
-import FeedbackItem from './FeedbackItem';
 
 interface SubjectCardProps {
   studentId: number | string;
@@ -78,9 +77,9 @@ const SubjectCard = ({ studentId, subjectId }: SubjectCardProps) => {
       case 1:
         return 'Moet verbeteren';
       case 2:
-        return 'Voldoende';
+        return 'OK voor nu';
       case 3:
-        return 'Uitstekend';
+        return 'Op koers';
       default:
         return 'Niet beoordeeld';
     }
@@ -143,13 +142,6 @@ const SubjectCard = ({ studentId, subjectId }: SubjectCardProps) => {
                   )}
                 </div>
               </div>
-              
-              {latestGrades.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Laatste feedback</h4>
-                  <FeedbackItem feedback={latestGrades[0].feedback} date={latestGrades[0].date} />
-                </div>
-              )}
               
               <div>
                 <h4 className="text-sm font-medium mb-2">Algemene voortgang</h4>

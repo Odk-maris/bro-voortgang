@@ -150,6 +150,13 @@ const TeacherHistory = () => {
     return 'Onbekende instructeur';
   };
 
+  // Function to get the appropriate badge color for test completions
+  const getTestCompletionBadgeClass = (count: number) => {
+    if (count >= 2) return 'bg-green-100 text-green-800 border-green-200';
+    if (count === 1) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    return 'bg-gray-100 text-gray-500 border-gray-200';
+  };
+
   if (loading && !selectedStudentId) {
     return (
       <DashboardLayout allowedRoles={['teacher', 'admin']}>
@@ -445,7 +452,7 @@ const TeacherHistory = () => {
               <div>
                 <Card>
                   <CardHeader>
-                    <CardTitle>Bruggen gedaan</CardTitle>
+                    <CardTitle>Bruggen afgetekend</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -462,9 +469,7 @@ const TeacherHistory = () => {
                           
                           <Badge
                             variant="outline"
-                            className={`
-                              ${testCompletionCounts[test.id] > 0 ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}
-                            `}
+                            className={getTestCompletionBadgeClass(testCompletionCounts[test.id] || 0)}
                           >
                             {testCompletionCounts[test.id] > 0 ? `${testCompletionCounts[test.id]} keer` : 'Nog niet'}
                           </Badge>

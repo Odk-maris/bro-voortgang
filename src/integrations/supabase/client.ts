@@ -58,3 +58,20 @@ export type Grade = Tables['grades']['Row'];
 export type TestCompletion = Tables['test_completions']['Row'];
 export type CategoryFeedback = Tables['category_feedback']['Row'];
 export type Test = Tables['tests']['Row'];
+
+// Helper mapping for grade labeling
+export const getGradeLabel = (grade: number): string => {
+  switch(grade) {
+    case 1: return 'Moet verbeteren';
+    case 2: return 'OK voor nu';
+    case 3: return 'Op koers';
+    default: return 'Niet beoordeeld';
+  }
+};
+
+// Helper for getting test completion status color
+export const getTestCompletionColor = (count: number): string => {
+  if (count >= 2) return 'bg-green-100 text-green-800 border-green-200';
+  if (count === 1) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+  return 'bg-gray-100 text-gray-500 border-gray-200';
+};
