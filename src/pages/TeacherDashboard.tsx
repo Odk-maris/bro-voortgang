@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -170,7 +169,6 @@ const TeacherDashboard = () => {
     }));
   };
 
-  // Individual save functions for better error handling
   const saveGrade = useCallback(async (subjectId: number, grade: number, userId: string) => {
     try {
       console.log(`Saving grade for subject ${subjectId}: ${grade}`);
@@ -217,6 +215,32 @@ const TeacherDashboard = () => {
       return false;
     }
   }, [selectedStudentId]);
+
+  const resetForm = () => {
+    // Reset grades
+    setSelectedGrades({});
+    
+    // Reset feedback for all categories
+    setCategoryFeedback({
+      [CATEGORIES.VERRICHTINGEN]: '',
+      [CATEGORIES.ROEITECHNIEK]: '',
+      [CATEGORIES.STUURKUNST]: ''
+    });
+    
+    // Reset test selections
+    const initialTestState: Record<number, boolean> = {};
+    tests.forEach(test => {
+      initialTestState[test.id] = false;
+    });
+    setSelectedTests(initialTestState);
+    
+    // Reset save status
+    setSaveStatus({
+      grades: {},
+      tests: {},
+      feedback: {}
+    });
+  };
 
   const handleSaveGrades = async () => {
     if (!selectedStudentId) {
@@ -314,30 +338,8 @@ const TeacherDashboard = () => {
           description: `${gradesSaved} beoordelingen, ${feedbackSaved} feedback en ${testsSaved} bruggen zijn bijgewerkt.`,
         });
         
-        // Reset the form for successfully saved items
-        const newSelectedGrades = { ...selectedGrades };
-        Object.entries(saveStatus.grades).forEach(([subjectId, success]) => {
-          if (success) {
-            delete newSelectedGrades[parseInt(subjectId)];
-          }
-        });
-        setSelectedGrades(newSelectedGrades);
-        
-        const newSelectedTests = { ...selectedTests };
-        Object.entries(saveStatus.tests).forEach(([testId, success]) => {
-          if (success) {
-            newSelectedTests[parseInt(testId)] = false;
-          }
-        });
-        setSelectedTests(newSelectedTests);
-        
-        const newCategoryFeedback = { ...categoryFeedback };
-        Object.entries(saveStatus.feedback).forEach(([category, success]) => {
-          if (success) {
-            newCategoryFeedback[category] = '';
-          }
-        });
-        setCategoryFeedback(newCategoryFeedback);
+        // Reset the form after successful save
+        resetForm();
         
         // Update test completion counts
         if (selectedStudentId) {
