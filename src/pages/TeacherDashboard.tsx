@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/layouts/DashboardLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -29,7 +30,7 @@ import {
   CATEGORIES,
   addCategoryFeedback,
 } from '@/utils/supabaseData';
-import { CategoryEnum, supabase } from '@/integrations/supabase/client';
+import { CategoryEnum, supabase, getGradeLabel, getTestCompletionColor } from '@/integrations/supabase/client';
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
@@ -397,6 +398,28 @@ const TeacherDashboard = () => {
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Grading Legend Card */}
+        <div className="mb-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-red-100 text-red-700 border-red-200">1</Badge>
+                  <span>Nog te verbeteren</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">2</Badge>
+                  <span>OK voor nu (acceptabel)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-100 text-green-700 border-green-200">3</Badge>
+                  <span>Op koers (goed)</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {selectedStudentId && (
