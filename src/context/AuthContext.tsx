@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase, User, RoleEnum, GroupEnum, applyAuth, getAuthHeaders } from '@/integrations/supabase/client';
+import { checkAndClearExpiredStorage } from '@/utils/storageManager';
 
 // Custom interface that matches our app's user model
 interface AppUser {
@@ -28,6 +28,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check and clear expired storage on app initialization
+    checkAndClearExpiredStorage();
+    
     const checkAuth = async () => {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
